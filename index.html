@@ -153,6 +153,22 @@
       background: #ffe3e3;
     }
 
+    /* Pontuação em destaque no ecrã final */
+    .pontuacao-final {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    /* Caixa de feedback quando a resposta está certa */
+    .feedback.feedback-certo {
+      background: #e3f9e5;
+    }
+
+    .feedback.feedback-certo h2 {
+      margin-bottom: 0;
+    }
+
     /* Caixa de feedback com explicação e exemplo */
     .feedback {
       margin-top: 20px;
@@ -231,21 +247,26 @@
       <p class="pergunta" id="texto-pergunta"></p>
       <div class="opcoes" id="opcoes"></div>
 
-      <!-- Aparece só depois de o utilizador escolher uma opção -->
+      <!-- Aparece só depois de o utilizador responder (ou o tempo acabar) -->
       <div class="feedback escondido" id="feedback">
         <h2 id="feedback-titulo"></h2>
-        <p id="feedback-explicacao"></p>
-        <p><strong>Exemplo prático:</strong> <span id="feedback-exemplo"></span></p>
+        <!-- Explicação e exemplo: só aparecem se errar ou o tempo acabar -->
+        <div id="feedback-detalhes">
+          <p id="feedback-explicacao"></p>
+          <p><strong>Exemplo prático:</strong> <span id="feedback-exemplo"></span></p>
+        </div>
       </div>
 
-      <button class="botao" id="botao-seguinte" disabled>Seguinte</button>
+      <!-- Escondido até a pergunta estar respondida -->
+      <button class="botao escondido" id="botao-seguinte">Seguinte</button>
     </section>
 
     <!-- ===== Ecrã final com o resultado ===== -->
     <section id="ecra-resultado" class="escondido">
       <h2>Terminaste o quiz!</h2>
-      <p id="texto-resultado"></p>
-      <button class="botao" id="botao-recomecar">Recomeçar</button>
+      <p class="pontuacao-final" id="texto-pontuacao"></p>
+      <p id="mensagem-resultado"></p>
+      <button class="botao" id="botao-reiniciar">Reiniciar</button>
     </section>
   </main>
 
@@ -405,8 +426,10 @@
     const elFeedbackExplicacao = document.getElementById("feedback-explicacao");
     const elFeedbackExemplo = document.getElementById("feedback-exemplo");
     const elBotaoSeguinte = document.getElementById("botao-seguinte");
-    const elTextoResultado = document.getElementById("texto-resultado");
-    const elBotaoRecomecar = document.getElementById("botao-recomecar");
+    const elFeedbackDetalhes = document.getElementById("feedback-detalhes");
+    const elTextoPontuacao = document.getElementById("texto-pontuacao");
+    const elMensagemResultado = document.getElementById("mensagem-resultado");
+    const elBotaoReiniciar = document.getElementById("botao-reiniciar");
 
     /* ==========================================================
        TEMPORIZADOR
@@ -509,9 +532,9 @@
         elOpcoes.appendChild(botao);
       });
 
-      // Esconde o feedback e bloqueia o "Seguinte" até haver resposta
+      // Esconde o feedback e o "Seguinte" até haver resposta
       elFeedback.classList.add("escondido");
-      elBotaoSeguinte.disabled = true;
+      elBotaoSeguinte.classList.add("escondido");
 
       // Na última pergunta o botão passa a dizer "Ver resultado"
       elBotaoSeguinte.textContent =
@@ -531,9 +554,9 @@
       const acertou = indiceEscolhido === perguntas[indiceAtual].correta;
       if (acertou) {
         pontuacao++;
-        mostrarFeedback("✅ Certo!", null);
+        mostrarFeedback(true, "✅ Certo!", null);
       } else {
-        mostrarFeedback("❌ Errado.", indiceEscolhido);
+        mostrarFeedback(false, "❌ Errado.", indiceEscolhido);
       }
     }
 
@@ -543,35 +566,69 @@
     function tempoEsgotado() {
       if (respondida) return;
       pararTemporizador();
-      mostrarFeedback("⏰ Tempo esgotado!", null);
+      mostrarFeedback(false, "⏰ Tempo esgotado!", null);
     }
 
     /**
-     * Bloqueia as opções, destaca a resposta certa (e a errada escolhida,
-     * se houver) e mostra a explicação e o exemplo prático.
+     * Bloqueia as opções, pinta-as e mostra o feedback.
+     *  - Se acertou: a opção certa fica verde e aparece só "Certo!".
+     *  - Se errou ou o tempo acabou: a escolhida fica vermelha (se houver),
+     *    a certa fica verde e aparece a explicação e o exemplo prático.
+     * No fim mostra o botão "Seguinte".
+     * @param {boolean} acertou - se a resposta foi certa
      * @param {string} titulo - mensagem de topo do feedback
      * @param {number|null} indiceErrado - opção errada escolhida, ou null
      */
-    function mostrarFeedback(titulo, indiceErrado) {
+    function mostrarFeedback(acertou, titulo, indiceErrado) {
       respondida = true;
 
       const atual = perguntas[indiceAtual];
       const botoes = elOpcoes.querySelectorAll(".opcao");
 
+      // Bloqueia todas as opções
       botoes.forEach(function (botao) {
         botao.disabled = true;
       });
+
+      // Cores: certa a verde, escolhida errada a vermelho
       botoes[atual.correta].classList.add("certa");
       if (indiceErrado !== null) {
         botoes[indiceErrado].classList.add("errada");
       }
 
       elFeedbackTitulo.textContent = titulo;
-      elFeedbackExplicacao.textContent = atual.explicacao;
-      elFeedbackExemplo.textContent = atual.exemplo;
+      elFeedback.classList.toggle("feedback-certo", acertou);
+
+      if (acertou) {
+        elFeedbackDetalhes.classList.add("escondido");
+      } else {
+        elFeedbackExplicacao.textContent = atual.explicacao;
+        elFeedbackExemplo.textContent = atual.exemplo;
+        elFeedbackDetalhes.classList.remove("escondido");
+      }
       elFeedback.classList.remove("escondido");
 
-      elBotaoSeguinte.disabled = false;
+      // Só agora aparece o botão para avançar
+      elBotaoSeguinte.classList.remove("escondido");
+    }
+
+    /**
+     * Devolve uma mensagem de acordo com a percentagem de respostas certas.
+     * @param {number} certas - número de respostas certas
+     * @param {number} total - número total de perguntas
+     * @returns {string}
+     */
+    function mensagemPorResultado(certas, total) {
+      const percentagem = certas / total;
+      if (percentagem === 1) {
+        return "Excelente! Acertaste em tudo. Já dominas as bases do investimento.";
+      } else if (percentagem >= 0.75) {
+        return "Muito bem! Tens uma boa base. Revê as explicações das que falhaste.";
+      } else if (percentagem >= 0.5) {
+        return "Bom começo! Já conheces alguns conceitos, mas ainda há matéria para rever.";
+      } else {
+        return "Não desanimes! Lê com calma as explicações e tenta outra vez.";
+      }
     }
 
     /**
@@ -588,14 +645,14 @@
     }
 
     /**
-     * Mostra o ecrã final com o número de respostas certas.
+     * Mostra o ecrã final com a pontuação e uma mensagem conforme o resultado.
      */
     function mostrarResultado() {
       pararTemporizador();
       elEcraPergunta.classList.add("escondido");
       elEcraResultado.classList.remove("escondido");
-      elTextoResultado.textContent =
-        "Acertaste " + pontuacao + " de " + perguntas.length + " perguntas.";
+      elTextoPontuacao.textContent = pontuacao + " / " + perguntas.length;
+      elMensagemResultado.textContent = mensagemPorResultado(pontuacao, perguntas.length);
     }
 
     /* ==========================================================
@@ -603,7 +660,7 @@
        ========================================================== */
     elBotaoComecar.addEventListener("click", comecar);
     elBotaoSeguinte.addEventListener("click", seguinte);
-    elBotaoRecomecar.addEventListener("click", comecar);
+    elBotaoReiniciar.addEventListener("click", comecar);
     mostrarEcraInicial();
   </script>
 </body>
