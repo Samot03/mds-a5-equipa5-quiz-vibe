@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz de Investimentos</title>
+
+  <style>
+    /* ==========================================================
+       ESTILOS BÁSICOS
+       Para já o foco é a estrutura; o aspeto visual é simples.
+       ========================================================== */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      background: #f4f6f8;
+      color: #1f2933;
+    }
+
+    /* Caixa central que contém todo o quiz */
+    .quiz {
+      max-width: 640px;
+      margin: 32px auto;
+      padding: 24px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+
+    /* ----- Ecrã inicial ----- */
+    .regras {
+      margin: 0 0 8px;
+    }
+
+    /* ----- Indicador de progresso "Pergunta X/Y" ----- */
+    .progresso {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #616e7c;
+      margin-bottom: 6px;
+    }
+
+    /* Calha (fundo) comum à barra de progresso e à barra do temporizador */
+    .barra {
+      height: 8px;
+      border-radius: 999px;
+      background: #e4e7eb;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .barra-preenchida {
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+    }
+
+    .barra-progresso .barra-preenchida {
+      background: #3e4c59;
+      transition: width 0.3s ease;
+    }
+
+    /* ----- Temporizador ----- */
+    .temporizador {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    .temporizador-segundos {
+      font-weight: 700;
+      font-size: 1.1rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .barra-tempo .barra-preenchida {
+      background: #2f8132;
+    }
+
+    /* Estado de alerta: faltam 5 segundos ou menos */
+    .alerta .temporizador-segundos {
+      color: #ba2525;
+    }
+
+    .alerta .barra-tempo .barra-preenchida {
+      background: #ba2525;
+    }
+
+    .tema {
+      display: inline-block;
+      font-size: 0.8rem;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: #e4e7eb;
+      margin-bottom: 12px;
+    }
+
+    .pergunta {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 0 0 16px;
+    }
+
+    /* Lista de opções de resposta */
+    .opcoes {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .opcao {
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 1rem;
+      font-family: inherit;
+      border: 2px solid #cbd2d9;
+      border-radius: 8px;
+      background: #ffffff;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .opcao:hover:not(:disabled) {
+      border-color: #3e4c59;
+    }
+
+    .opcao:disabled {
+      cursor: default;
+    }
+
+    /* Estados das opções depois de o utilizador responder */
+    .opcao.certa {
+      border-color: #2f8132;
+      background: #e3f9e5;
+    }
+
+    .opcao.errada {
+      border-color: #ba2525;
+      background: #ffe3e3;
+    }
+
+    /* Caixa de feedback com explicação e exemplo */
+    .feedback {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #f0f4f8;
+    }
+
+    .feedback h2 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+    }
+
+    .feedback p {
+      margin: 0 0 10px;
+    }
+
+    .feedback p:last-child {
+      margin-bottom: 0;
+    }
+
+    .botao {
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-family: inherit;
+      border: none;
+      border-radius: 8px;
+      background: #1f2933;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .botao:disabled {
+      background: #9aa5b1;
+      cursor: not-allowed;
+    }
+
+    /* Utilitário para esconder elementos */
+    .escondido {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="quiz">
+    <h1>Quiz de Investimentos para Iniciantes</h1>
+
+    <!-- ===== Ecrã inicial ===== -->
+    <section id="ecra-inicial">
+      <p class="regras" id="texto-regras"></p>
+      <button class="botao" id="botao-comecar">Começar</button>
+    </section>
+
+    <!-- ===== Ecrã da pergunta ===== -->
+    <section id="ecra-pergunta" class="escondido">
+      <!-- Progresso no quiz -->
+      <div class="progresso" id="progresso"></div>
+      <div class="barra barra-progresso">
+        <div class="barra-preenchida" id="barra-progresso"></div>
+      </div>
+
+      <!-- Temporizador da pergunta -->
+      <div id="zona-tempo">
+        <div class="temporizador">
+          <span>Tempo restante</span>
+          <span class="temporizador-segundos" id="segundos">20 s</span>
+        </div>
+        <div class="barra barra-tempo">
+          <div class="barra-preenchida" id="barra-tempo"></div>
+        </div>
+      </div>
+
+      <span class="tema" id="tema"></span>
+      <p class="pergunta" id="texto-pergunta"></p>
+      <div class="opcoes" id="opcoes"></div>
+
+      <!-- Aparece só depois de o utilizador escolher uma opção -->
+      <div class="feedback escondido" id="feedback">
+        <h2 id="feedback-titulo"></h2>
+        <p id="feedback-explicacao"></p>
+        <p><strong>Exemplo prático:</strong> <span id="feedback-exemplo"></span></p>
+      </div>
+
+      <button class="botao" id="botao-seguinte" disabled>Seguinte</button>
+    </section>
+
+    <!-- ===== Ecrã final com o resultado ===== -->
+    <section id="ecra-resultado" class="escondido">
+      <h2>Terminaste o quiz!</h2>
+      <p id="texto-resultado"></p>
+      <button class="botao" id="botao-recomecar">Recomeçar</button>
+    </section>
+  </main>
+
+  <script>
+    /* ==========================================================
+       DADOS DO QUIZ
+       Cada pergunta é um objeto com:
+         - tema:       título curto do tema (opcional, só informativo)
+         - pergunta:   texto da pergunta
+         - opcoes:     array com 4 respostas possíveis
+         - correta:    índice (0 a 3) da opção certa em "opcoes"
+         - explicacao: 2 a 3 frases que explicam a resposta
+         - exemplo:    exemplo prático com números
+       Para acrescentar uma pergunta, basta adicionar outro objeto
+       com a mesma estrutura ao fim do array.
+       ========================================================== */
+    const perguntas = [
+      {
+        tema: "Risco e retorno",
+        pergunta: "Qual destas afirmações descreve melhor a relação entre risco e retorno?",
+        opcoes: [
+          "Investimentos com maior risco garantem sempre maior retorno.",
+          "Para teres a hipótese de um retorno maior, normalmente tens de aceitar mais risco.",
+          "O risco e o retorno não têm qualquer relação entre si.",
+          "Os investimentos de baixo risco são os que dão mais lucro a longo prazo."
+        ],
+        correta: 1,
+        explicacao: "Em geral, os investimentos com potencial de retorno mais alto são também os que oscilam mais e podem dar perdas. Mais risco não garante mais ganho; apenas aumenta a hipótese de ganhar mais (ou de perder mais).",
+        exemplo: "Com 1000 € num depósito a 2% tens 1020 € ao fim de um ano, quase garantidos. Com 1000 € em ações podes acabar o ano com 1150 € (+15%) num ano bom ou com 750 € (−25%) num ano mau."
+      },
+      {
+        tema: "Diversificação",
+        pergunta: "O que significa diversificar uma carteira de investimentos?",
+        opcoes: [
+          "Comprar e vender investimentos com muita frequência.",
+          "Pôr todo o dinheiro na empresa que mais subiu no último ano.",
+          "Repartir o dinheiro por vários investimentos diferentes para reduzir o impacto de cada um correr mal.",
+          "Investir apenas em empresas do teu próprio país."
+        ],
+        correta: 2,
+        explicacao: "Diversificar é não pôr os ovos todos no mesmo cesto. Se tiveres muitos investimentos diferentes, a queda de um deles pesa pouco no total da carteira.",
+        exemplo: "Se investires 10 000 € numa só empresa e ela cair 50%, ficas com 5000 €. Se repartires por 20 empresas (500 € cada) e só uma cair 50%, perdes 250 €, ou seja, 2,5% do total."
+      },
+      {
+        tema: "Juros compostos",
+        pergunta: "O que são juros compostos?",
+        opcoes: [
+          "Juros que só são pagos no fim do investimento, sem qualquer acréscimo.",
+          "Juros calculados sempre sobre o valor inicial investido.",
+          "Uma comissão cobrada pelo banco sobre os teus juros.",
+          "Juros que passam a render também juros, porque são somados ao capital."
+        ],
+        correta: 3,
+        explicacao: "Com juros compostos, os juros de cada ano juntam-se ao capital e no ano seguinte também rendem. Com o tempo, este efeito \"bola de neve\" faz o dinheiro crescer cada vez mais depressa.",
+        exemplo: "Se investires 1000 € a 5% ao ano durante 10 anos, com juros compostos ficas com cerca de 1629 €. Com juros simples (sempre sobre os 1000 € iniciais) ficarias só com 1500 €."
+      },
+      {
+        tema: "ETFs e fundos de índice",
+        pergunta: "O que é um ETF que replica um índice, como o MSCI World?",
+        opcoes: [
+          "Um fundo negociado em bolsa que tenta acompanhar o desempenho de um conjunto alargado de empresas.",
+          "Uma ação de uma única empresa tecnológica.",
+          "Um depósito a prazo com capital garantido pelo Estado.",
+          "Um empréstimo que fazes a uma empresa em troca de juros fixos."
+        ],
+        correta: 0,
+        explicacao: "Um ETF (Exchange Traded Fund) é um fundo que se compra e vende na bolsa como uma ação. Os ETFs de índice copiam um índice, por isso dão diversificação imediata e costumam ter custos baixos.",
+        exemplo: "Com 100 € num ETF do MSCI World ficas com uma pequena parte de cerca de 1400 empresas de 23 países desenvolvidos, em vez de teres de comprar cada ação separadamente."
+      },
+      {
+        tema: "Ações vs. obrigações",
+        pergunta: "Qual é a principal diferença entre uma ação e uma obrigação?",
+        opcoes: [
+          "Não há diferença: são dois nomes para o mesmo produto.",
+          "Uma ação torna-te dono de uma parte da empresa; uma obrigação é um empréstimo que fazes a uma empresa ou Estado.",
+          "As obrigações são sempre mais arriscadas do que as ações.",
+          "As ações pagam juros fixos todos os anos e as obrigações não."
+        ],
+        correta: 1,
+        explicacao: "Quem compra uma ação fica sócio da empresa e ganha se ela valorizar ou distribuir dividendos, sem garantias. Quem compra uma obrigação empresta dinheiro e recebe juros combinados (o cupão) e o capital no fim, por isso costuma ser menos volátil.",
+        exemplo: "Uma obrigação de 1000 € a 5 anos com cupão de 3% paga 30 € por ano (150 € no total) e devolve os 1000 € no fim, se o emitente não falhar. Uma ação de 1000 € pode valer 1400 € ou 700 € daqui a 5 anos."
+      },
+      {
+        tema: "Inflação",
+        pergunta: "Que efeito tem a inflação no dinheiro que tens parado na conta à ordem?",
+        opcoes: [
+          "Nenhum, porque o valor na conta continua igual.",
+          "Aumenta o valor do teu dinheiro, porque os preços sobem.",
+          "Faz o teu dinheiro perder poder de compra ao longo do tempo.",
+          "Só afeta quem tem investimentos em ações."
+        ],
+        correta: 2,
+        explicacao: "A inflação é a subida geral dos preços. O número na conta não muda, mas com o mesmo dinheiro consegues comprar cada vez menos, por isso o dinheiro parado perde valor real.",
+        exemplo: "Se tiveres 10 000 € parados durante 10 anos com uma inflação média de 3% ao ano, no fim esses 10 000 € só compram o equivalente a cerca de 7441 € de hoje."
+      },
+      {
+        tema: "Custos e comissões",
+        pergunta: "O que é a TER (Total Expense Ratio) de um fundo ou ETF?",
+        opcoes: [
+          "O retorno garantido que o fundo paga por ano.",
+          "O imposto que pagas ao Estado quando vendes o fundo.",
+          "O número de empresas que o fundo tem na carteira.",
+          "A percentagem do valor investido que o fundo cobra por ano para cobrir os seus custos."
+        ],
+        correta: 3,
+        explicacao: "A TER é o custo anual do fundo, expresso em percentagem, e é descontada automaticamente ao valor do investimento. Parece pouco, mas ao longo de muitos anos uma diferença de 1% faz uma grande diferença no resultado final.",
+        exemplo: "Se investires 10 000 € durante 20 anos com um retorno bruto de 7% ao ano, com uma TER de 0,2% ficas com cerca de 37 276 €; com uma TER de 1,5% ficas só com cerca de 29 178 €, ou seja, perdes mais de 8000 € em custos."
+      },
+      {
+        tema: "Fundo de emergência e horizonte temporal",
+        pergunta: "Antes de começares a investir em ações, o que é recomendado fazer primeiro?",
+        opcoes: [
+          "Criar um fundo de emergência com alguns meses de despesas, guardado num sítio seguro e acessível.",
+          "Investir todas as poupanças de uma vez para não perder tempo.",
+          "Pedir um crédito pessoal para investir mais dinheiro.",
+          "Investir em ações o dinheiro de que vais precisar no próximo ano."
+        ],
+        correta: 0,
+        explicacao: "O fundo de emergência serve para imprevistos (perder o emprego, uma avaria) sem teres de vender investimentos na pior altura. Além disso, dinheiro que vais precisar a curto prazo não deve estar em ações, porque elas podem estar a perder valor precisamente quando precisares dele.",
+        exemplo: "Se gastares 1000 € por mês, um fundo de emergência de 3 a 6 meses são 3000 € a 6000 € numa conta ou depósito com acesso rápido. Só o dinheiro que não vais precisar durante, por exemplo, 5 a 10 anos deve ir para ações."
+      }
+    ];
+
+    /* ==========================================================
+       CONFIGURAÇÃO
+       ========================================================== */
+    const TEMPO_POR_PERGUNTA = 20; // segundos para responder a cada pergunta
+    const TEMPO_ALERTA = 5;        // a partir daqui a barra muda de cor
+
+    /* ==========================================================
+       ESTADO DO QUIZ
+       ========================================================== */
+    let indiceAtual = 0;    // posição da pergunta que está a ser mostrada
+    let pontuacao = 0;      // número de respostas certas
+    let respondida = false; // impede responder duas vezes à mesma pergunta
+    let intervaloTempo = null; // identificador do setInterval do temporizador
+    let fimDoTempo = 0;        // instante (ms) em que o tempo da pergunta acaba
+
+    /* ==========================================================
+       REFERÊNCIAS AOS ELEMENTOS DA PÁGINA
+       ========================================================== */
+    const elEcraInicial = document.getElementById("ecra-inicial");
+    const elTextoRegras = document.getElementById("texto-regras");
+    const elBotaoComecar = document.getElementById("botao-comecar");
+    const elEcraPergunta = document.getElementById("ecra-pergunta");
+    const elBarraProgresso = document.getElementById("barra-progresso");
+    const elZonaTempo = document.getElementById("zona-tempo");
+    const elSegundos = document.getElementById("segundos");
+    const elBarraTempo = document.getElementById("barra-tempo");
+    const elEcraResultado = document.getElementById("ecra-resultado");
+    const elProgresso = document.getElementById("progresso");
+    const elTema = document.getElementById("tema");
+    const elTextoPergunta = document.getElementById("texto-pergunta");
+    const elOpcoes = document.getElementById("opcoes");
+    const elFeedback = document.getElementById("feedback");
+    const elFeedbackTitulo = document.getElementById("feedback-titulo");
+    const elFeedbackExplicacao = document.getElementById("feedback-explicacao");
+    const elFeedbackExemplo = document.getElementById("feedback-exemplo");
+    const elBotaoSeguinte = document.getElementById("botao-seguinte");
+    const elTextoResultado = document.getElementById("texto-resultado");
+    const elBotaoRecomecar = document.getElementById("botao-recomecar");
+
+    /* ==========================================================
+       TEMPORIZADOR
+       ========================================================== */
+
+    /**
+     * Arranca o temporizador do zero para a pergunta atual.
+     * Usa a hora real (Date.now) para não acumular atrasos do setInterval.
+     */
+    function iniciarTemporizador() {
+      pararTemporizador(); // garante que nunca há dois temporizadores ativos
+      fimDoTempo = Date.now() + TEMPO_POR_PERGUNTA * 1000;
+      atualizarTemporizador();
+      intervaloTempo = setInterval(atualizarTemporizador, 100);
+    }
+
+    /**
+     * Para o temporizador (ao responder, ao esgotar o tempo ou no fim do quiz).
+     */
+    function pararTemporizador() {
+      if (intervaloTempo !== null) {
+        clearInterval(intervaloTempo);
+        intervaloTempo = null;
+      }
+    }
+
+    /**
+     * Atualiza a contagem decrescente e a largura da barra.
+     * Quando o tempo chega a zero, trata a pergunta como errada.
+     */
+    function atualizarTemporizador() {
+      const restanteMs = Math.max(0, fimDoTempo - Date.now());
+      const restanteSeg = Math.ceil(restanteMs / 1000);
+
+      elSegundos.textContent = restanteSeg + " s";
+      elBarraTempo.style.width = (restanteMs / (TEMPO_POR_PERGUNTA * 1000)) * 100 + "%";
+
+      // Muda a cor quando faltam 5 segundos ou menos
+      elZonaTempo.classList.toggle("alerta", restanteSeg <= TEMPO_ALERTA);
+
+      if (restanteMs === 0) {
+        tempoEsgotado();
+      }
+    }
+
+    /* ==========================================================
+       FLUXO DO QUIZ
+       ========================================================== */
+
+    /**
+     * Mostra o ecrã inicial com as regras.
+     */
+    function mostrarEcraInicial() {
+      elTextoRegras.textContent =
+        "Vais responder a " + perguntas.length + " perguntas de escolha múltipla sobre investimentos. " +
+        "Cada pergunta tem tempo limitado: tens " + TEMPO_POR_PERGUNTA + " segundos para escolher a resposta. " +
+        "Se o tempo acabar, a pergunta conta como errada.";
+      elEcraInicial.classList.remove("escondido");
+      elEcraPergunta.classList.add("escondido");
+      elEcraResultado.classList.add("escondido");
+    }
+
+    /**
+     * Começa (ou recomeça) o quiz a partir da primeira pergunta.
+     */
+    function comecar() {
+      indiceAtual = 0;
+      pontuacao = 0;
+      elEcraInicial.classList.add("escondido");
+      elEcraResultado.classList.add("escondido");
+      elEcraPergunta.classList.remove("escondido");
+      mostrarPergunta();
+    }
+
+    /**
+     * Mostra no ecrã a pergunta indicada por "indiceAtual":
+     * progresso, tema, texto e um botão por cada opção.
+     * Reinicia o temporizador do zero.
+     */
+    function mostrarPergunta() {
+      const atual = perguntas[indiceAtual];
+      respondida = false;
+
+      // Progresso: "Pergunta 3/8" e barra correspondente
+      elProgresso.textContent = "Pergunta " + (indiceAtual + 1) + "/" + perguntas.length;
+      elBarraProgresso.style.width = ((indiceAtual + 1) / perguntas.length) * 100 + "%";
+
+      elTema.textContent = atual.tema;
+      elTextoPergunta.textContent = atual.pergunta;
+
+      // Limpa as opções da pergunta anterior e cria as novas
+      elOpcoes.innerHTML = "";
+      atual.opcoes.forEach(function (textoOpcao, indice) {
+        const botao = document.createElement("button");
+        botao.className = "opcao";
+        botao.textContent = textoOpcao;
+        botao.addEventListener("click", function () {
+          responder(indice);
+        });
+        elOpcoes.appendChild(botao);
+      });
+
+      // Esconde o feedback e bloqueia o "Seguinte" até haver resposta
+      elFeedback.classList.add("escondido");
+      elBotaoSeguinte.disabled = true;
+
+      // Na última pergunta o botão passa a dizer "Ver resultado"
+      elBotaoSeguinte.textContent =
+        indiceAtual === perguntas.length - 1 ? "Ver resultado" : "Seguinte";
+
+      iniciarTemporizador();
+    }
+
+    /**
+     * Trata a escolha do utilizador.
+     * @param {number} indiceEscolhido - índice da opção clicada
+     */
+    function responder(indiceEscolhido) {
+      if (respondida) return;
+      pararTemporizador();
+
+      const acertou = indiceEscolhido === perguntas[indiceAtual].correta;
+      if (acertou) {
+        pontuacao++;
+        mostrarFeedback("✅ Certo!", null);
+      } else {
+        mostrarFeedback("❌ Errado.", indiceEscolhido);
+      }
+    }
+
+    /**
+     * Chamada quando o tempo acaba sem resposta: conta como errada.
+     */
+    function tempoEsgotado() {
+      if (respondida) return;
+      pararTemporizador();
+      mostrarFeedback("⏰ Tempo esgotado!", null);
+    }
+
+    /**
+     * Bloqueia as opções, destaca a resposta certa (e a errada escolhida,
+     * se houver) e mostra a explicação e o exemplo prático.
+     * @param {string} titulo - mensagem de topo do feedback
+     * @param {number|null} indiceErrado - opção errada escolhida, ou null
+     */
+    function mostrarFeedback(titulo, indiceErrado) {
+      respondida = true;
+
+      const atual = perguntas[indiceAtual];
+      const botoes = elOpcoes.querySelectorAll(".opcao");
+
+      botoes.forEach(function (botao) {
+        botao.disabled = true;
+      });
+      botoes[atual.correta].classList.add("certa");
+      if (indiceErrado !== null) {
+        botoes[indiceErrado].classList.add("errada");
+      }
+
+      elFeedbackTitulo.textContent = titulo;
+      elFeedbackExplicacao.textContent = atual.explicacao;
+      elFeedbackExemplo.textContent = atual.exemplo;
+      elFeedback.classList.remove("escondido");
+
+      elBotaoSeguinte.disabled = false;
+    }
+
+    /**
+     * Avança para a pergunta seguinte ou, se já não houver mais,
+     * mostra o ecrã de resultado.
+     */
+    function seguinte() {
+      indiceAtual++;
+      if (indiceAtual < perguntas.length) {
+        mostrarPergunta();
+      } else {
+        mostrarResultado();
+      }
+    }
+
+    /**
+     * Mostra o ecrã final com o número de respostas certas.
+     */
+    function mostrarResultado() {
+      pararTemporizador();
+      elEcraPergunta.classList.add("escondido");
+      elEcraResultado.classList.remove("escondido");
+      elTextoResultado.textContent =
+        "Acertaste " + pontuacao + " de " + perguntas.length + " perguntas.";
+    }
+
+    /* ==========================================================
+       ARRANQUE
+       ========================================================== */
+    elBotaoComecar.addEventListener("click", comecar);
+    elBotaoSeguinte.addEventListener("click", seguinte);
+    elBotaoRecomecar.addEventListener("click", comecar);
+    mostrarEcraInicial();
+  </script>
+</body>
+</html>
