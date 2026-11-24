@@ -594,13 +594,13 @@
     /* Texto e linhas dos eixos */
     .g-texto {
       font-family: inherit;
-      font-size: 11px;
+      font-size: 12px;
       fill: var(--texto-suave);
     }
 
     .g-valor {
       font-family: inherit;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
       fill: var(--texto);
     }
@@ -899,9 +899,157 @@
     }
 
     /* ==========================================================
-       TELEMÓVEL
+       TELEMÓVEL (até 560 px; testado a 375 px de largura)
        ========================================================== */
     @media (max-width: 560px) {
+      /* Botão "Começar" fica sempre visível no fundo do ecrã */
+      .zona-comecar {
+        position: sticky;
+        bottom: 0;
+        z-index: 4;
+        margin: 0 -16px -20px;
+        padding: 20px 16px calc(14px + env(safe-area-inset-bottom));
+        border-radius: 0 0 18px 18px;
+        background: linear-gradient(to bottom, transparent, var(--cartao) 40%);
+      }
+
+      .inicio .botao {
+        max-width: none;
+      }
+
+      .inicio-icone {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 12px;
+        font-size: 2rem;
+        border-radius: 20px;
+      }
+
+      .regras {
+        margin-bottom: 16px;
+        font-size: 0.95rem;
+      }
+
+      .destaques {
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .destaques span {
+        font-size: 0.78rem;
+      }
+
+      .conteudo-jogo {
+        margin-bottom: 16px;
+        padding: 14px;
+      }
+
+      .temas {
+        gap: 6px;
+      }
+
+      .temas li {
+        padding: 4px 10px;
+        font-size: 0.78rem;
+      }
+
+      .como-funciona {
+        font-size: 0.9rem;
+      }
+
+      /* Sem teclado físico, a dica não faz sentido */
+      .dica-teclado {
+        display: none;
+      }
+
+      /* Cabeçalho fixo mais baixo para sobrar ecrã para a pergunta */
+      .linha-topo {
+        margin-bottom: 8px;
+      }
+
+      .temporizador-segundos {
+        min-width: 66px;
+        padding: 4px 10px;
+        font-size: 0.95rem;
+      }
+
+      .barra {
+        height: 6px;
+      }
+
+      .barra + .barra {
+        margin-top: 6px;
+      }
+
+      .barra-tempo {
+        height: 5px;
+      }
+
+      .pergunta {
+        margin-bottom: 14px;
+      }
+
+      .opcoes {
+        gap: 10px;
+      }
+
+      .opcao {
+        min-height: 54px;
+        font-size: 0.97rem;
+        line-height: 1.4;
+      }
+
+      /* Menos caixas dentro de caixas: o texto e o gráfico ganham largura */
+      .feedback {
+        margin-top: 16px;
+        padding: 14px 12px;
+        border-left-width: 4px;
+        scroll-margin-top: 100px;
+      }
+
+      .exemplo {
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .grafico {
+        margin-top: 12px;
+        padding: 12px 6px 10px;
+      }
+
+      .grafico-titulo {
+        margin: 0 6px 4px;
+      }
+
+      .grafico-legenda {
+        margin: 6px 6px 0;
+        font-size: 0.8rem;
+      }
+
+      /* Ecrã final mais compacto */
+      .anel {
+        width: 150px;
+        height: 150px;
+      }
+
+      .anel-interior {
+        width: 120px;
+        height: 120px;
+      }
+
+      .pontuacao-final {
+        font-size: 2.1rem;
+      }
+
+      .resumo {
+        gap: 8px;
+      }
+
+      .revisao li {
+        padding: 9px 10px;
+        font-size: 0.9rem;
+      }
+
       body {
         padding: 12px 10px calc(16px + env(safe-area-inset-bottom));
       }
@@ -912,8 +1060,8 @@
       }
 
       .cabecalho {
-        margin: -20px -16px 16px;
-        padding: 14px 16px 12px;
+        margin: -20px -16px 14px;
+        padding: 12px 16px 10px;
         border-radius: 18px 18px 0 0;
       }
 
@@ -985,7 +1133,9 @@
         </ul>
       </div>
 
-      <button class="botao" id="botao-comecar">Começar <span class="seta" aria-hidden="true">→</span></button>
+      <div class="zona-comecar">
+        <button class="botao" id="botao-comecar">Começar <span class="seta" aria-hidden="true">→</span></button>
+      </div>
       <p class="dica-teclado">Dica: podes responder com as teclas <kbd>A</kbd>–<kbd>D</kbd> e avançar com <kbd>Enter</kbd>.</p>
     </section>
 
@@ -1399,10 +1549,38 @@
        ========================================================== */
     const SVG_NS = "http://www.w3.org/2000/svg";
 
-    // Medidas do desenho (em unidades do viewBox; o SVG escala com o ecrã)
-    const G_LARGURA = 340;
+    // Medidas do desenho. A largura é a largura real disponível no ecrã
+    // (medida em desenharGrafico), para o texto nunca ficar minúsculo
+    // no telemóvel nem gigante no computador.
+    let G_LARGURA = 340;
     const G_ALTURA = 210;
-    const G_MARGEM = { esquerda: 54, direita: 14, topo: 22, baixo: 34 };
+    let graficoAtual = null; // dados do gráfico visível (para redesenhar ao rodar o ecrã)
+    const G_MARGEM = { esquerda: 54, direita: 14, topo: 22, baixo: 34 }; // "baixo" muda se os rótulos precisarem de 2 linhas
+
+    /**
+     * Parte um rótulo em linhas que caibam na largura indicada
+     * (aproximação: cerca de 6,8 px por letra com letra de 12 px).
+     * @param {string} texto
+     * @param {number} largura - largura disponível em px
+     * @returns {string[]} linhas
+     */
+    function partirRotulo(texto, largura) {
+      const maxLetras = Math.max(4, Math.floor(largura / 6.8));
+      const palavras = texto.split(" ");
+      const linhas = [];
+      let atual = "";
+      palavras.forEach(function (palavra) {
+        const tentativa = atual ? atual + " " + palavra : palavra;
+        if (tentativa.length > maxLetras && atual) {
+          linhas.push(atual);
+          atual = palavra;
+        } else {
+          atual = tentativa;
+        }
+      });
+      if (atual) linhas.push(atual);
+      return linhas;
+    }
 
     /**
      * Cria um elemento SVG com os atributos indicados.
@@ -1482,12 +1660,18 @@
      * (por exemplo, o valor investido).
      */
     function desenharBarras(svg, dados) {
+      const larguraUtil = G_LARGURA - G_MARGEM.esquerda - G_MARGEM.direita;
+      const espaco = larguraUtil / dados.barras.length;
+
+      // Rótulos partidos em linhas; se algum precisar de 2 linhas,
+      // reserva mais espaço por baixo do gráfico
+      const rotulos = dados.barras.map(function (b) { return partirRotulo(b.rotulo, espaco - 6); });
+      const maxLinhas = Math.max.apply(null, rotulos.map(function (l) { return l.length; }));
+      G_MARGEM.baixo = 34 + (maxLinhas - 1) * 14;
+
       const valores = dados.barras.map(function (b) { return b.valor; });
       if (dados.referencia) valores.push(dados.referencia.valor);
       const y = desenharEixoY(svg, 0, Math.max.apply(null, valores) * 1.12, dados.unidade);
-
-      const larguraUtil = G_LARGURA - G_MARGEM.esquerda - G_MARGEM.direita;
-      const espaco = larguraUtil / dados.barras.length;
       const larguraBarra = Math.min(64, espaco * 0.55);
 
       dados.barras.forEach(function (barra, i) {
@@ -1510,11 +1694,15 @@
         valor.textContent = formatarValor(barra.valor, dados.unidade, false);
         svg.appendChild(valor);
 
-        // Rótulo por baixo da barra
+        // Rótulo por baixo da barra (uma ou duas linhas)
         const rotulo = criarSvg("text", {
           x: centro, y: G_ALTURA - G_MARGEM.baixo + 18, "text-anchor": "middle", class: "g-texto"
         });
-        rotulo.textContent = barra.rotulo;
+        rotulos[i].forEach(function (linha, k) {
+          const tspan = criarSvg("tspan", { x: centro, dy: k === 0 ? 0 : 14 });
+          tspan.textContent = linha;
+          rotulo.appendChild(tspan);
+        });
         svg.appendChild(rotulo);
       });
 
@@ -1535,6 +1723,7 @@
      * Devolve a legenda (nome e cor de cada série).
      */
     function desenharLinhas(svg, dados) {
+      G_MARGEM.baixo = 34;
       let todos = [];
       dados.series.forEach(function (s) { todos = todos.concat(s.valores); });
       const yMin = dados.yMin !== undefined ? dados.yMin : 0;
@@ -1548,8 +1737,10 @@
 
       // Marcas do eixo X: início, meio e fim
       [0, Math.round(n / 2), n].forEach(function (i) {
+        // O último rótulo alinha à direita para não sair do gráfico
         const t = criarSvg("text", {
-          x: x(i), y: G_ALTURA - G_MARGEM.baixo + 18, "text-anchor": "middle", class: "g-texto"
+          x: i === n ? G_LARGURA - 2 : x(i), y: G_ALTURA - G_MARGEM.baixo + 18,
+          "text-anchor": i === n ? "end" : "middle", class: "g-texto"
         });
         t.textContent = i + (i === n ? " " + dados.eixoX : "");
         svg.appendChild(t);
@@ -1587,10 +1778,16 @@
     function desenharGrafico(dados) {
       elGraficoSvg.innerHTML = "";
       elGraficoLegenda.innerHTML = "";
+      graficoAtual = dados || null;
       if (!dados) {
         elGrafico.classList.add("escondido");
         return;
       }
+
+      // Mostra a caixa primeiro para conseguir medir a largura disponível
+      elGrafico.classList.remove("escondido");
+      const larguraDisponivel = elGraficoSvg.clientWidth;
+      G_LARGURA = larguraDisponivel > 0 ? Math.min(440, Math.max(260, larguraDisponivel)) : 340;
 
       const svg = criarSvg("svg", {
         viewBox: "0 0 " + G_LARGURA + " " + G_ALTURA,
@@ -1835,10 +2032,12 @@
       } else {
         elFeedbackExplicacao.textContent = atual.explicacao;
         elFeedbackExemplo.textContent = atual.exemplo;
-        desenharGrafico(atual.grafico);
         elFeedbackDetalhes.classList.remove("escondido");
       }
       elFeedback.classList.remove("escondido");
+
+      // O gráfico só é desenhado depois de a caixa estar visível (para medir a largura)
+      desenharGrafico(tipo === "certo" ? null : atual.grafico);
 
       // Só agora aparece o botão para avançar
       elBotaoSeguinte.classList.remove("escondido");
@@ -2014,6 +2213,17 @@
        ARRANQUE
        ========================================================== */
     validarPerguntas();
+
+    // Ao rodar o telemóvel ou mudar o tamanho da janela, redesenha o gráfico
+    let esperaRedimensionar = null;
+    window.addEventListener("resize", function () {
+      clearTimeout(esperaRedimensionar);
+      esperaRedimensionar = setTimeout(function () {
+        if (graficoAtual && !elGrafico.classList.contains("escondido")) {
+          desenharGrafico(graficoAtual);
+        }
+      }, 150);
+    });
     elBotaoComecar.addEventListener("click", comecar);
     elBotaoSeguinte.addEventListener("click", seguinte);
     elBotaoReiniciar.addEventListener("click", comecar);
