@@ -2,63 +2,299 @@
 <html lang="pt-PT">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#4f46e5">
   <title>Quiz de Investimentos</title>
 
   <style>
     /* ==========================================================
-       ESTILOS BÁSICOS
-       Para já o foco é a estrutura; o aspeto visual é simples.
+       CORES E MEDIDAS (variáveis)
+       Alterar aqui muda o aspeto de todo o quiz.
        ========================================================== */
+    :root {
+      --fundo-a: #eef2ff;
+      --fundo-b: #ecfeff;
+      --cartao: #ffffff;
+      --texto: #0f172a;
+      --texto-suave: #64748b;
+      --borda: #e2e8f0;
+      --calha: #e8ecf4;
 
+      --acento: #4f46e5;        /* cor principal (índigo) */
+      --acento-2: #06b6d4;      /* cor secundária (ciano) */
+      --acento-suave: #eef2ff;
+
+      --certo: #059669;
+      --certo-suave: #ecfdf5;
+      --errado: #e11d48;
+      --errado-suave: #fff1f2;
+      --aviso: #d97706;
+      --aviso-suave: #fffbeb;
+
+      --raio: 20px;
+      --raio-pequeno: 14px;
+      --sombra: 0 20px 45px -20px rgba(15, 23, 42, 0.35);
+      --sombra-leve: 0 4px 14px -6px rgba(15, 23, 42, 0.18);
+    }
+
+    /* Modo escuro automático, conforme a preferência do sistema */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fundo-a: #0b1020;
+        --fundo-b: #111827;
+        --cartao: #161d2f;
+        --texto: #e5e7eb;
+        --texto-suave: #94a3b8;
+        --borda: #2a3550;
+        --calha: #232c44;
+
+        --acento: #818cf8;
+        --acento-2: #22d3ee;
+        --acento-suave: #1e2547;
+
+        --certo: #34d399;
+        --certo-suave: #0f2f27;
+        --errado: #fb7185;
+        --errado-suave: #3a1520;
+        --aviso: #fbbf24;
+        --aviso-suave: #33270c;
+
+        --sombra: 0 20px 45px -20px rgba(0, 0, 0, 0.7);
+        --sombra-leve: 0 4px 14px -6px rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    /* ==========================================================
+       BASE
+       ========================================================== */
     * {
       box-sizing: border-box;
     }
 
+    html {
+      -webkit-text-size-adjust: 100%;
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
-      padding: 16px;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.5;
-      background: #f4f6f8;
-      color: #1f2933;
+      min-height: 100vh;
+      min-height: 100dvh;
+      /* Espaço extra em baixo para telemóveis com barra de gestos */
+      padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--texto);
+      background:
+        radial-gradient(circle at 0% 0%, rgba(79, 70, 229, 0.18), transparent 45%),
+        radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.18), transparent 45%),
+        linear-gradient(160deg, var(--fundo-a), var(--fundo-b));
+      background-attachment: fixed;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    /* Caixa central que contém todo o quiz */
+    /* Cartão central que contém todo o quiz.
+       Não tem altura fixa nem overflow escondido: a página faz scroll
+       normalmente, o que é o mais confortável no telemóvel. */
     .quiz {
-      max-width: 640px;
-      margin: 32px auto;
-      padding: 24px;
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 28px;
+      background: var(--cartao);
+      border-radius: var(--raio);
+      box-shadow: var(--sombra);
     }
 
-    h1 {
-      margin-top: 0;
-      font-size: 1.5rem;
+    .escondido {
+      display: none !important;
     }
 
-    /* ----- Ecrã inicial ----- */
+    /* Animação de entrada usada em cada ecrã/pergunta nova */
+    @keyframes entrar {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .entrar {
+      animation: entrar 0.35s ease both;
+    }
+
+    /* ==========================================================
+       BOTÕES
+       ========================================================== */
+    .botao {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 52px;
+      padding: 14px 26px;
+      font: inherit;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--acento), var(--acento-2));
+      box-shadow: 0 10px 22px -10px var(--acento);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    .botao:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+    }
+
+    .botao:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .botao:focus-visible,
+    .opcao:focus-visible {
+      outline: 3px solid var(--acento-2);
+      outline-offset: 3px;
+    }
+
+    .botao .seta {
+      transition: transform 0.15s ease;
+    }
+
+    .botao:hover .seta {
+      transform: translateX(4px);
+    }
+
+    /* ==========================================================
+       ECRÃ INICIAL
+       ========================================================== */
+    .inicio {
+      text-align: center;
+    }
+
+    .inicio-icone {
+      display: grid;
+      place-items: center;
+      width: 84px;
+      height: 84px;
+      margin: 4px auto 16px;
+      font-size: 2.6rem;
+      border-radius: 26px;
+      background: linear-gradient(135deg, var(--acento), var(--acento-2));
+      box-shadow: 0 14px 30px -12px var(--acento);
+      animation: flutuar 3s ease-in-out infinite;
+    }
+
+    @keyframes flutuar {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+
+    .inicio h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.6rem, 5vw, 2.1rem);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
     .regras {
-      margin: 0 0 8px;
+      margin: 0 auto 22px;
+      max-width: 520px;
+      color: var(--texto-suave);
     }
 
-    /* ----- Indicador de progresso "Pergunta X/Y" ----- */
+    /* "Cartões" com os números das regras (8 perguntas, 20 s, ...) */
+    .destaques {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 0 0 26px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .destaques li {
+      padding: 14px 8px;
+      border-radius: var(--raio-pequeno);
+      background: var(--acento-suave);
+    }
+
+    .destaques strong {
+      display: block;
+      font-size: 1.35rem;
+      color: var(--acento);
+    }
+
+    .destaques span {
+      font-size: 0.85rem;
+      color: var(--texto-suave);
+    }
+
+    .inicio .botao {
+      width: 100%;
+      max-width: 320px;
+    }
+
+    /* ==========================================================
+       CABEÇALHO DA PERGUNTA (progresso + temporizador)
+       Fica "colado" ao topo do ecrã quando se faz scroll.
+       ========================================================== */
+    .cabecalho {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      margin: -28px -28px 20px;
+      padding: 18px 28px 14px;
+      background: var(--cartao);
+      border-radius: var(--raio) var(--raio) 0 0;
+      border-bottom: 1px solid var(--borda);
+    }
+
+    .linha-topo {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
     .progresso {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #616e7c;
-      margin-bottom: 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
     }
 
-    /* Calha (fundo) comum à barra de progresso e à barra do temporizador */
+    .progresso small {
+      color: var(--texto-suave);
+      font-weight: 600;
+    }
+
+    /* "Comprimido" com os segundos que faltam */
+    .temporizador-segundos {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 74px;
+      justify-content: center;
+      padding: 6px 12px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      border-radius: 999px;
+      color: var(--certo);
+      background: var(--certo-suave);
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+
+    /* Calha (fundo) comum às duas barras */
     .barra {
       height: 8px;
       border-radius: 999px;
-      background: #e4e7eb;
+      background: var(--calha);
       overflow: hidden;
-      margin-bottom: 16px;
+    }
+
+    .barra + .barra {
+      margin-top: 8px;
     }
 
     .barra-preenchida {
@@ -68,205 +304,514 @@
     }
 
     .barra-progresso .barra-preenchida {
-      background: #3e4c59;
-      transition: width 0.3s ease;
+      background: linear-gradient(90deg, var(--acento), var(--acento-2));
+      transition: width 0.4s ease;
     }
 
-    /* ----- Temporizador ----- */
-    .temporizador {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-size: 0.9rem;
-      margin-bottom: 6px;
-    }
-
-    .temporizador-segundos {
-      font-weight: 700;
-      font-size: 1.1rem;
-      font-variant-numeric: tabular-nums;
+    .barra-tempo {
+      height: 6px;
     }
 
     .barra-tempo .barra-preenchida {
-      background: #2f8132;
+      background: var(--certo);
+      transition: background 0.2s ease;
     }
 
     /* Estado de alerta: faltam 5 segundos ou menos */
     .alerta .temporizador-segundos {
-      color: #ba2525;
+      color: var(--errado);
+      background: var(--errado-suave);
+      animation: pulsar 1s ease-in-out infinite;
     }
 
     .alerta .barra-tempo .barra-preenchida {
-      background: #ba2525;
+      background: var(--errado);
     }
 
+    @keyframes pulsar {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.08); }
+    }
+
+    /* ==========================================================
+       PERGUNTA E OPÇÕES
+       ========================================================== */
     .tema {
       display: inline-block;
+      margin-bottom: 10px;
+      padding: 4px 12px;
       font-size: 0.8rem;
-      padding: 2px 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--acento);
       border-radius: 999px;
-      background: #e4e7eb;
-      margin-bottom: 12px;
+      background: var(--acento-suave);
     }
 
     .pergunta {
-      font-size: 1.15rem;
-      font-weight: 600;
-      margin: 0 0 16px;
+      margin: 0 0 18px;
+      font-size: clamp(1.15rem, 3.6vw, 1.35rem);
+      font-weight: 700;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
     }
 
-    /* Lista de opções de resposta */
     .opcoes {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: grid;
+      gap: 12px;
     }
 
     .opcao {
-      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      min-height: 60px;
       padding: 12px 14px;
-      font-size: 1rem;
-      font-family: inherit;
-      border: 2px solid #cbd2d9;
-      border-radius: 8px;
-      background: #ffffff;
+      font: inherit;
+      text-align: left;
       color: inherit;
+      border: 2px solid var(--borda);
+      border-radius: var(--raio-pequeno);
+      background: var(--cartao);
       cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease,
+                  transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .opcao:hover:not(:disabled) {
-      border-color: #3e4c59;
+    /* Só há efeito de "hover" em aparelhos com rato */
+    @media (hover: hover) {
+      .opcao:hover:not(:disabled) {
+        border-color: var(--acento);
+        box-shadow: var(--sombra-leve);
+        transform: translateY(-2px);
+      }
+    }
+
+    .opcao:active:not(:disabled) {
+      transform: scale(0.99);
     }
 
     .opcao:disabled {
       cursor: default;
     }
 
-    /* Estados das opções depois de o utilizador responder */
+    /* Letra (A, B, C, D) à esquerda de cada opção */
+    .letra {
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--acento);
+      border-radius: 10px;
+      background: var(--acento-suave);
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .opcao-texto {
+      flex: 1;
+    }
+
+    /* Depois de responder, as opções que não interessam ficam esbatidas */
+    .respondida .opcao:not(.certa):not(.errada) {
+      opacity: 0.55;
+    }
+
     .opcao.certa {
-      border-color: #2f8132;
-      background: #e3f9e5;
+      border-color: var(--certo);
+      background: var(--certo-suave);
+      animation: saltar 0.4s ease;
+    }
+
+    .opcao.certa .letra {
+      color: #ffffff;
+      background: var(--certo);
     }
 
     .opcao.errada {
-      border-color: #ba2525;
-      background: #ffe3e3;
+      border-color: var(--errado);
+      background: var(--errado-suave);
+      animation: abanar 0.4s ease;
     }
 
-    /* Pontuação em destaque no ecrã final */
-    .pontuacao-final {
-      font-size: 2rem;
-      font-weight: 700;
-      margin: 0 0 8px;
+    .opcao.errada .letra {
+      color: #ffffff;
+      background: var(--errado);
     }
 
-    /* Caixa de feedback quando a resposta está certa */
-    .feedback.feedback-certo {
-      background: #e3f9e5;
+    @keyframes saltar {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.02); }
+      100% { transform: scale(1); }
     }
 
-    .feedback.feedback-certo h2 {
-      margin-bottom: 0;
+    @keyframes abanar {
+      0%, 100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
     }
 
-    /* Caixa de feedback com explicação e exemplo */
+    /* ==========================================================
+       FEEDBACK (certo / errado / tempo esgotado)
+       ========================================================== */
     .feedback {
       margin-top: 20px;
-      padding: 16px;
-      border-radius: 8px;
-      background: #f0f4f8;
+      padding: 18px;
+      border-radius: var(--raio-pequeno);
+      border-left: 5px solid var(--errado);
+      background: var(--errado-suave);
+      animation: entrar 0.35s ease both;
     }
 
     .feedback h2 {
-      margin: 0 0 8px;
-      font-size: 1.05rem;
+      margin: 0 0 10px;
+      font-size: 1.15rem;
     }
 
     .feedback p {
-      margin: 0 0 10px;
+      margin: 0;
     }
 
-    .feedback p:last-child {
-      margin-bottom: 0;
+    .feedback.feedback-certo {
+      border-left-color: var(--certo);
+      background: var(--certo-suave);
     }
 
-    .botao {
-      margin-top: 20px;
-      padding: 12px 20px;
-      font-size: 1rem;
-      font-family: inherit;
-      border: none;
-      border-radius: 8px;
-      background: #1f2933;
-      color: #ffffff;
-      cursor: pointer;
+    .feedback.feedback-certo h2 {
+      margin: 0;
+      color: var(--certo);
     }
 
-    .botao:disabled {
-      background: #9aa5b1;
-      cursor: not-allowed;
+    .feedback.feedback-errado h2 {
+      color: var(--errado);
     }
 
-    /* Utilitário para esconder elementos */
-    .escondido {
-      display: none;
+    .feedback.feedback-tempo {
+      border-left-color: var(--aviso);
+      background: var(--aviso-suave);
+    }
+
+    .feedback.feedback-tempo h2 {
+      color: var(--aviso);
+    }
+
+    /* Caixa do exemplo prático dentro do feedback */
+    .exemplo {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--cartao);
+      box-shadow: var(--sombra-leve);
+    }
+
+    .exemplo-titulo {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--acento);
+    }
+
+    /* Botão "Seguinte": fica colado ao fundo do ecrã enquanto se lê
+       a explicação, para não ser preciso procurá-lo no telemóvel. */
+    .zona-seguinte {
+      position: sticky;
+      bottom: 0;
+      z-index: 4;
+      display: flex;
+      justify-content: flex-end;
+      /* Ocupa a largura do cartão; o fundo esbatido evita que o texto
+         que passa por trás do botão fique cortado de forma estranha */
+      margin: 4px -28px -28px;
+      padding: 24px 28px calc(16px + env(safe-area-inset-bottom));
+      border-radius: 0 0 var(--raio) var(--raio);
+      background: linear-gradient(to bottom, transparent, var(--cartao) 45%);
+      pointer-events: none; /* a zona transparente não bloqueia toques */
+    }
+
+    .zona-seguinte .botao {
+      pointer-events: auto;
+    }
+
+    /* Ao fazer scroll automático até ao feedback, deixa espaço para o
+       cabeçalho fixo (em cima) e para o botão "Seguinte" (em baixo) */
+    .feedback {
+      scroll-margin-top: 140px;
+      scroll-margin-bottom: 100px;
+    }
+
+    .zona-seguinte .botao {
+      animation: entrar 0.3s ease both;
+    }
+
+    .dica-teclado {
+      margin: 14px 0 0;
+      font-size: 0.8rem;
+      text-align: center;
+      color: var(--texto-suave);
+    }
+
+    kbd {
+      padding: 1px 6px;
+      font: inherit;
+      font-weight: 700;
+      border: 1px solid var(--borda);
+      border-bottom-width: 2px;
+      border-radius: 6px;
+    }
+
+    /* Em ecrãs tácteis não faz sentido falar de teclado */
+    @media (hover: none) {
+      .dica-teclado {
+        display: none;
+      }
+    }
+
+    /* ==========================================================
+       ECRÃ FINAL
+       ========================================================== */
+    .resultado {
+      text-align: center;
+    }
+
+    .resultado h2 {
+      margin: 0 0 18px;
+      font-size: 1.5rem;
+    }
+
+    /* Anel com a percentagem de respostas certas.
+       A percentagem vem da variável --pct, definida no JavaScript. */
+    .anel {
+      --pct: 0;
+      display: grid;
+      place-items: center;
+      width: 170px;
+      height: 170px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      background:
+        conic-gradient(var(--acento) calc(var(--pct) * 1%), var(--calha) 0);
+    }
+
+    .anel-interior {
+      display: grid;
+      place-items: center;
+      width: 138px;
+      height: 138px;
+      border-radius: 50%;
+      background: var(--cartao);
+    }
+
+    .pontuacao-final {
+      margin: 0;
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pontuacao-final small {
+      font-size: 1.1rem;
+      color: var(--texto-suave);
+    }
+
+    .resultado-emoji {
+      font-size: 1.6rem;
+    }
+
+    .mensagem-resultado {
+      max-width: 460px;
+      margin: 0 auto 20px;
+      font-size: 1.05rem;
+    }
+
+    /* Resumo: certas / erradas / tempo esgotado */
+    .resumo {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 0 0 24px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .resumo li {
+      padding: 12px 6px;
+      border-radius: var(--raio-pequeno);
+    }
+
+    .resumo strong {
+      display: block;
+      font-size: 1.4rem;
+    }
+
+    .resumo span {
+      font-size: 0.82rem;
+      color: var(--texto-suave);
+    }
+
+    .resumo .r-certas  { background: var(--certo-suave); }
+    .resumo .r-certas strong  { color: var(--certo); }
+    .resumo .r-erradas { background: var(--errado-suave); }
+    .resumo .r-erradas strong { color: var(--errado); }
+    .resumo .r-tempo   { background: var(--aviso-suave); }
+    .resumo .r-tempo strong   { color: var(--aviso); }
+
+    .resultado .botao {
+      width: 100%;
+      max-width: 320px;
+    }
+
+    /* ==========================================================
+       TELEMÓVEL
+       ========================================================== */
+    @media (max-width: 560px) {
+      body {
+        padding: 12px 10px calc(16px + env(safe-area-inset-bottom));
+      }
+
+      .quiz {
+        padding: 20px 16px;
+        border-radius: 18px;
+      }
+
+      .cabecalho {
+        margin: -20px -16px 16px;
+        padding: 14px 16px 12px;
+        border-radius: 18px 18px 0 0;
+      }
+
+      .destaques li {
+        padding: 12px 4px;
+      }
+
+      .destaques strong {
+        font-size: 1.15rem;
+      }
+
+      .opcao {
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .letra {
+        width: 32px;
+        height: 32px;
+      }
+
+      .zona-seguinte {
+        margin: 4px -16px -20px;
+        padding: 24px 16px calc(14px + env(safe-area-inset-bottom));
+        border-radius: 0 0 18px 18px;
+      }
+
+      /* No telemóvel o "Seguinte" ocupa a largura toda: mais fácil de tocar */
+      .zona-seguinte .botao {
+        width: 100%;
+      }
+    }
+
+    /* Quem pede menos animações no sistema não as vê */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
     }
   </style>
 </head>
 <body>
 
   <main class="quiz">
-    <h1>Quiz de Investimentos para Iniciantes</h1>
 
     <!-- ===== Ecrã inicial ===== -->
-    <section id="ecra-inicial">
+    <section id="ecra-inicial" class="inicio">
+      <div class="inicio-icone" aria-hidden="true">📈</div>
+      <h1>Quiz de Investimentos para Iniciantes</h1>
       <p class="regras" id="texto-regras"></p>
-      <button class="botao" id="botao-comecar">Começar</button>
+
+      <!-- Números-chave das regras (preenchidos pelo JavaScript) -->
+      <ul class="destaques">
+        <li><strong id="destaque-perguntas">8</strong><span>perguntas</span></li>
+        <li><strong id="destaque-tempo">20 s</strong><span>por pergunta</span></li>
+        <li><strong>4</strong><span>opções cada</span></li>
+      </ul>
+
+      <button class="botao" id="botao-comecar">Começar <span class="seta" aria-hidden="true">→</span></button>
+      <p class="dica-teclado">Dica: podes responder com as teclas <kbd>A</kbd>–<kbd>D</kbd> e avançar com <kbd>Enter</kbd>.</p>
     </section>
 
     <!-- ===== Ecrã da pergunta ===== -->
     <section id="ecra-pergunta" class="escondido">
-      <!-- Progresso no quiz -->
-      <div class="progresso" id="progresso"></div>
-      <div class="barra barra-progresso">
-        <div class="barra-preenchida" id="barra-progresso"></div>
-      </div>
-
-      <!-- Temporizador da pergunta -->
-      <div id="zona-tempo">
-        <div class="temporizador">
-          <span>Tempo restante</span>
-          <span class="temporizador-segundos" id="segundos">20 s</span>
+      <!-- Cabeçalho fixo: progresso e temporizador -->
+      <header class="cabecalho" id="zona-tempo">
+        <div class="linha-topo">
+          <span class="progresso" id="progresso"></span>
+          <span class="temporizador-segundos" aria-live="off">
+            <span aria-hidden="true">⏱</span><span id="segundos">20 s</span>
+          </span>
         </div>
-        <div class="barra barra-tempo">
+        <div class="barra barra-progresso" title="Progresso no quiz">
+          <div class="barra-preenchida" id="barra-progresso"></div>
+        </div>
+        <div class="barra barra-tempo" title="Tempo restante">
           <div class="barra-preenchida" id="barra-tempo"></div>
         </div>
+      </header>
+
+      <!-- Conteúdo da pergunta (reanimado a cada pergunta nova) -->
+      <div id="corpo-pergunta">
+        <span class="tema" id="tema"></span>
+        <p class="pergunta" id="texto-pergunta"></p>
+        <div class="opcoes" id="opcoes"></div>
       </div>
 
-      <span class="tema" id="tema"></span>
-      <p class="pergunta" id="texto-pergunta"></p>
-      <div class="opcoes" id="opcoes"></div>
-
       <!-- Aparece só depois de o utilizador responder (ou o tempo acabar) -->
-      <div class="feedback escondido" id="feedback">
+      <div class="feedback escondido" id="feedback" aria-live="polite">
         <h2 id="feedback-titulo"></h2>
         <!-- Explicação e exemplo: só aparecem se errar ou o tempo acabar -->
         <div id="feedback-detalhes">
           <p id="feedback-explicacao"></p>
-          <p><strong>Exemplo prático:</strong> <span id="feedback-exemplo"></span></p>
+          <div class="exemplo">
+            <span class="exemplo-titulo">💡 Exemplo prático</span>
+            <span id="feedback-exemplo"></span>
+          </div>
         </div>
       </div>
 
       <!-- Escondido até a pergunta estar respondida -->
-      <button class="botao escondido" id="botao-seguinte">Seguinte</button>
+      <div class="zona-seguinte">
+        <button class="botao escondido" id="botao-seguinte">Seguinte</button>
+      </div>
     </section>
 
     <!-- ===== Ecrã final com o resultado ===== -->
-    <section id="ecra-resultado" class="escondido">
-      <h2>Terminaste o quiz!</h2>
-      <p class="pontuacao-final" id="texto-pontuacao"></p>
-      <p id="mensagem-resultado"></p>
-      <button class="botao" id="botao-reiniciar">Reiniciar</button>
+    <section id="ecra-resultado" class="resultado escondido">
+      <h2>Terminaste o quiz! <span class="resultado-emoji" id="emoji-resultado"></span></h2>
+
+      <div class="anel" id="anel-resultado">
+        <div class="anel-interior">
+          <p class="pontuacao-final" id="texto-pontuacao"></p>
+        </div>
+      </div>
+
+      <p class="mensagem-resultado" id="mensagem-resultado"></p>
+
+      <ul class="resumo">
+        <li class="r-certas"><strong id="resumo-certas">0</strong><span>certas</span></li>
+        <li class="r-erradas"><strong id="resumo-erradas">0</strong><span>erradas</span></li>
+        <li class="r-tempo"><strong id="resumo-tempo">0</strong><span>sem tempo</span></li>
+      </ul>
+
+      <button class="botao" id="botao-reiniciar">↻ Reiniciar</button>
     </section>
   </main>
 
@@ -395,12 +940,15 @@
        ========================================================== */
     const TEMPO_POR_PERGUNTA = 20; // segundos para responder a cada pergunta
     const TEMPO_ALERTA = 5;        // a partir daqui a barra muda de cor
+    const LETRAS = ["A", "B", "C", "D"]; // letras mostradas ao lado das opções
 
     /* ==========================================================
        ESTADO DO QUIZ
        ========================================================== */
     let indiceAtual = 0;    // posição da pergunta que está a ser mostrada
     let pontuacao = 0;      // número de respostas certas
+    let erradas = 0;        // número de respostas erradas
+    let semTempo = 0;       // número de perguntas em que o tempo acabou
     let respondida = false; // impede responder duas vezes à mesma pergunta
     let intervaloTempo = null; // identificador do setInterval do temporizador
     let fimDoTempo = 0;        // instante (ms) em que o tempo da pergunta acaba
@@ -410,26 +958,79 @@
        ========================================================== */
     const elEcraInicial = document.getElementById("ecra-inicial");
     const elTextoRegras = document.getElementById("texto-regras");
+    const elDestaquePerguntas = document.getElementById("destaque-perguntas");
+    const elDestaqueTempo = document.getElementById("destaque-tempo");
     const elBotaoComecar = document.getElementById("botao-comecar");
+
     const elEcraPergunta = document.getElementById("ecra-pergunta");
+    const elProgresso = document.getElementById("progresso");
     const elBarraProgresso = document.getElementById("barra-progresso");
     const elZonaTempo = document.getElementById("zona-tempo");
     const elSegundos = document.getElementById("segundos");
     const elBarraTempo = document.getElementById("barra-tempo");
-    const elEcraResultado = document.getElementById("ecra-resultado");
-    const elProgresso = document.getElementById("progresso");
+    const elCorpoPergunta = document.getElementById("corpo-pergunta");
     const elTema = document.getElementById("tema");
     const elTextoPergunta = document.getElementById("texto-pergunta");
     const elOpcoes = document.getElementById("opcoes");
     const elFeedback = document.getElementById("feedback");
     const elFeedbackTitulo = document.getElementById("feedback-titulo");
+    const elFeedbackDetalhes = document.getElementById("feedback-detalhes");
     const elFeedbackExplicacao = document.getElementById("feedback-explicacao");
     const elFeedbackExemplo = document.getElementById("feedback-exemplo");
     const elBotaoSeguinte = document.getElementById("botao-seguinte");
-    const elFeedbackDetalhes = document.getElementById("feedback-detalhes");
+
+    const elEcraResultado = document.getElementById("ecra-resultado");
+    const elEmojiResultado = document.getElementById("emoji-resultado");
+    const elAnelResultado = document.getElementById("anel-resultado");
     const elTextoPontuacao = document.getElementById("texto-pontuacao");
     const elMensagemResultado = document.getElementById("mensagem-resultado");
+    const elResumoCertas = document.getElementById("resumo-certas");
+    const elResumoErradas = document.getElementById("resumo-erradas");
+    const elResumoTempo = document.getElementById("resumo-tempo");
     const elBotaoReiniciar = document.getElementById("botao-reiniciar");
+
+    /* ==========================================================
+       FUNÇÕES AUXILIARES DE INTERFACE
+       ========================================================== */
+
+    /** Indica se o utilizador pediu ao sistema menos animações. */
+    const menosAnimacoes = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /**
+     * Mostra um ecrã e esconde os outros dois.
+     * @param {HTMLElement} ecra - o ecrã a mostrar
+     */
+    function mostrarEcra(ecra) {
+      [elEcraInicial, elEcraPergunta, elEcraResultado].forEach(function (el) {
+        el.classList.toggle("escondido", el !== ecra);
+      });
+      reanimar(ecra);
+      window.scrollTo({ top: 0, behavior: menosAnimacoes ? "auto" : "smooth" });
+    }
+
+    /**
+     * Volta a correr a animação de entrada num elemento.
+     * (Remover a classe, forçar um "reflow" e voltar a pôr.)
+     * @param {HTMLElement} el
+     */
+    function reanimar(el) {
+      el.classList.remove("entrar");
+      void el.offsetWidth;
+      el.classList.add("entrar");
+    }
+
+    /**
+     * Faz scroll suave até um elemento, só se ele não estiver todo visível.
+     * Útil no telemóvel para mostrar a explicação logo após responder.
+     * @param {HTMLElement} el
+     */
+    function mostrarNoEcra(el) {
+      const caixa = el.getBoundingClientRect();
+      const alturaJanela = window.innerHeight;
+      if (caixa.top < 0 || caixa.bottom > alturaJanela) {
+        el.scrollIntoView({ behavior: menosAnimacoes ? "auto" : "smooth", block: "nearest" });
+      }
+    }
 
     /* ==========================================================
        TEMPORIZADOR
@@ -487,9 +1088,9 @@
         "Vais responder a " + perguntas.length + " perguntas de escolha múltipla sobre investimentos. " +
         "Cada pergunta tem tempo limitado: tens " + TEMPO_POR_PERGUNTA + " segundos para escolher a resposta. " +
         "Se o tempo acabar, a pergunta conta como errada.";
-      elEcraInicial.classList.remove("escondido");
-      elEcraPergunta.classList.add("escondido");
-      elEcraResultado.classList.add("escondido");
+      elDestaquePerguntas.textContent = perguntas.length;
+      elDestaqueTempo.textContent = TEMPO_POR_PERGUNTA + " s";
+      mostrarEcra(elEcraInicial);
     }
 
     /**
@@ -498,9 +1099,9 @@
     function comecar() {
       indiceAtual = 0;
       pontuacao = 0;
-      elEcraInicial.classList.add("escondido");
-      elEcraResultado.classList.add("escondido");
-      elEcraPergunta.classList.remove("escondido");
+      erradas = 0;
+      semTempo = 0;
+      mostrarEcra(elEcraPergunta);
       mostrarPergunta();
     }
 
@@ -514,18 +1115,34 @@
       respondida = false;
 
       // Progresso: "Pergunta 3/8" e barra correspondente
-      elProgresso.textContent = "Pergunta " + (indiceAtual + 1) + "/" + perguntas.length;
+      elProgresso.innerHTML = "";
+      elProgresso.append("Pergunta " + (indiceAtual + 1));
+      const total = document.createElement("small");
+      total.textContent = "/" + perguntas.length;
+      elProgresso.appendChild(total);
       elBarraProgresso.style.width = ((indiceAtual + 1) / perguntas.length) * 100 + "%";
 
       elTema.textContent = atual.tema;
       elTextoPergunta.textContent = atual.pergunta;
 
-      // Limpa as opções da pergunta anterior e cria as novas
+      // Limpa as opções da pergunta anterior e cria as novas:
+      // <button class="opcao"><span class="letra">A</span><span class="opcao-texto">...</span></button>
       elOpcoes.innerHTML = "";
+      elOpcoes.classList.remove("respondida");
       atual.opcoes.forEach(function (textoOpcao, indice) {
         const botao = document.createElement("button");
         botao.className = "opcao";
-        botao.textContent = textoOpcao;
+        botao.type = "button";
+
+        const letra = document.createElement("span");
+        letra.className = "letra";
+        letra.textContent = LETRAS[indice];
+
+        const texto = document.createElement("span");
+        texto.className = "opcao-texto";
+        texto.textContent = textoOpcao;
+
+        botao.append(letra, texto);
         botao.addEventListener("click", function () {
           responder(indice);
         });
@@ -537,8 +1154,13 @@
       elBotaoSeguinte.classList.add("escondido");
 
       // Na última pergunta o botão passa a dizer "Ver resultado"
-      elBotaoSeguinte.textContent =
-        indiceAtual === perguntas.length - 1 ? "Ver resultado" : "Seguinte";
+      elBotaoSeguinte.innerHTML =
+        (indiceAtual === perguntas.length - 1 ? "Ver resultado" : "Seguinte") +
+        ' <span class="seta" aria-hidden="true">→</span>';
+
+      // Animação de entrada e volta ao topo da página
+      reanimar(elCorpoPergunta);
+      window.scrollTo({ top: 0, behavior: menosAnimacoes ? "auto" : "smooth" });
 
       iniciarTemporizador();
     }
@@ -554,9 +1176,10 @@
       const acertou = indiceEscolhido === perguntas[indiceAtual].correta;
       if (acertou) {
         pontuacao++;
-        mostrarFeedback(true, "✅ Certo!", null);
+        mostrarFeedback("certo", "✅ Certo!", null);
       } else {
-        mostrarFeedback(false, "❌ Errado.", indiceEscolhido);
+        erradas++;
+        mostrarFeedback("errado", "❌ Errado.", indiceEscolhido);
       }
     }
 
@@ -566,7 +1189,8 @@
     function tempoEsgotado() {
       if (respondida) return;
       pararTemporizador();
-      mostrarFeedback(false, "⏰ Tempo esgotado!", null);
+      semTempo++;
+      mostrarFeedback("tempo", "⏰ Tempo esgotado!", null);
     }
 
     /**
@@ -575,11 +1199,11 @@
      *  - Se errou ou o tempo acabou: a escolhida fica vermelha (se houver),
      *    a certa fica verde e aparece a explicação e o exemplo prático.
      * No fim mostra o botão "Seguinte".
-     * @param {boolean} acertou - se a resposta foi certa
+     * @param {"certo"|"errado"|"tempo"} tipo - resultado da pergunta
      * @param {string} titulo - mensagem de topo do feedback
      * @param {number|null} indiceErrado - opção errada escolhida, ou null
      */
-    function mostrarFeedback(acertou, titulo, indiceErrado) {
+    function mostrarFeedback(tipo, titulo, indiceErrado) {
       respondida = true;
 
       const atual = perguntas[indiceAtual];
@@ -589,6 +1213,7 @@
       botoes.forEach(function (botao) {
         botao.disabled = true;
       });
+      elOpcoes.classList.add("respondida");
 
       // Cores: certa a verde, escolhida errada a vermelho
       botoes[atual.correta].classList.add("certa");
@@ -596,10 +1221,12 @@
         botoes[indiceErrado].classList.add("errada");
       }
 
+      // Caixa de feedback com a cor do tipo de resultado
       elFeedbackTitulo.textContent = titulo;
-      elFeedback.classList.toggle("feedback-certo", acertou);
+      elFeedback.classList.remove("feedback-certo", "feedback-errado", "feedback-tempo");
+      elFeedback.classList.add("feedback-" + tipo);
 
-      if (acertou) {
+      if (tipo === "certo") {
         elFeedbackDetalhes.classList.add("escondido");
       } else {
         elFeedbackExplicacao.textContent = atual.explicacao;
@@ -610,24 +1237,27 @@
 
       // Só agora aparece o botão para avançar
       elBotaoSeguinte.classList.remove("escondido");
+
+      // No telemóvel, desliza até à explicação para ela ficar à vista
+      mostrarNoEcra(elFeedback);
     }
 
     /**
-     * Devolve uma mensagem de acordo com a percentagem de respostas certas.
+     * Devolve uma mensagem e um emoji de acordo com a percentagem de respostas certas.
      * @param {number} certas - número de respostas certas
      * @param {number} total - número total de perguntas
-     * @returns {string}
+     * @returns {{mensagem: string, emoji: string}}
      */
     function mensagemPorResultado(certas, total) {
       const percentagem = certas / total;
       if (percentagem === 1) {
-        return "Excelente! Acertaste em tudo. Já dominas as bases do investimento.";
+        return { emoji: "🏆", mensagem: "Excelente! Acertaste em tudo. Já dominas as bases do investimento." };
       } else if (percentagem >= 0.75) {
-        return "Muito bem! Tens uma boa base. Revê as explicações das que falhaste.";
+        return { emoji: "🎉", mensagem: "Muito bem! Tens uma boa base. Revê as explicações das que falhaste." };
       } else if (percentagem >= 0.5) {
-        return "Bom começo! Já conheces alguns conceitos, mas ainda há matéria para rever.";
+        return { emoji: "👍", mensagem: "Bom começo! Já conheces alguns conceitos, mas ainda há matéria para rever." };
       } else {
-        return "Não desanimes! Lê com calma as explicações e tenta outra vez.";
+        return { emoji: "📚", mensagem: "Não desanimes! Lê com calma as explicações e tenta outra vez." };
       }
     }
 
@@ -636,6 +1266,7 @@
      * mostra o ecrã de resultado.
      */
     function seguinte() {
+      if (!respondida) return; // segurança: só avança depois de responder
       indiceAtual++;
       if (indiceAtual < perguntas.length) {
         mostrarPergunta();
@@ -645,15 +1276,84 @@
     }
 
     /**
-     * Mostra o ecrã final com a pontuação e uma mensagem conforme o resultado.
+     * Mostra o ecrã final com a pontuação, o anel de percentagem,
+     * o resumo e uma mensagem conforme o resultado.
      */
     function mostrarResultado() {
       pararTemporizador();
-      elEcraPergunta.classList.add("escondido");
-      elEcraResultado.classList.remove("escondido");
-      elTextoPontuacao.textContent = pontuacao + " / " + perguntas.length;
-      elMensagemResultado.textContent = mensagemPorResultado(pontuacao, perguntas.length);
+      mostrarEcra(elEcraResultado);
+
+      const total = perguntas.length;
+      const resultado = mensagemPorResultado(pontuacao, total);
+      elEmojiResultado.textContent = resultado.emoji;
+      elMensagemResultado.textContent = resultado.mensagem;
+      elResumoCertas.textContent = pontuacao;
+      elResumoErradas.textContent = erradas;
+      elResumoTempo.textContent = semTempo;
+
+      animarPontuacao(pontuacao, total);
     }
+
+    /**
+     * Anima a pontuação a contar de 0 até ao valor final
+     * e enche o anel ao mesmo ritmo.
+     * @param {number} certas
+     * @param {number} total
+     */
+    function animarPontuacao(certas, total) {
+      const duracao = menosAnimacoes ? 0 : 900; // ms
+      const inicio = performance.now();
+
+      function passo(agora) {
+        const t = duracao === 0 ? 1 : Math.min(1, (agora - inicio) / duracao);
+        const suave = 1 - Math.pow(1 - t, 3); // abranda no fim
+        const valor = certas * suave;
+
+        elAnelResultado.style.setProperty("--pct", (valor / total) * 100);
+        elTextoPontuacao.innerHTML = "";
+        elTextoPontuacao.append(String(Math.round(valor)));
+        const parteTotal = document.createElement("small");
+        parteTotal.textContent = "/" + total;
+        elTextoPontuacao.appendChild(parteTotal);
+
+        if (t < 1) requestAnimationFrame(passo);
+      }
+      requestAnimationFrame(passo);
+    }
+
+    /* ==========================================================
+       TECLADO (opcional, para computador)
+       A–D ou 1–4 escolhem a opção; Enter avança.
+       ========================================================== */
+    document.addEventListener("keydown", function (evento) {
+      if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
+      const tecla = evento.key.toUpperCase();
+
+      // Ecrã inicial ou final: Enter começa/reinicia
+      if (tecla === "ENTER" && !elEcraInicial.classList.contains("escondido")) {
+        evento.preventDefault();
+        comecar();
+        return;
+      }
+
+      if (elEcraPergunta.classList.contains("escondido")) return;
+
+      // Escolher opção pela letra ou pelo número
+      let indice = LETRAS.indexOf(tecla);
+      if (indice === -1 && tecla >= "1" && tecla <= "4") {
+        indice = Number(tecla) - 1;
+      }
+      if (indice !== -1 && !respondida && indice < perguntas[indiceAtual].opcoes.length) {
+        responder(indice);
+        return;
+      }
+
+      // Avançar com Enter depois de responder
+      if (tecla === "ENTER" && respondida) {
+        evento.preventDefault();
+        seguinte();
+      }
+    });
 
     /* ==========================================================
        ARRANQUE
