@@ -708,6 +708,55 @@
       pointer-events: auto;
     }
 
+    /* Com os dois botões: "Anterior" à esquerda, "Seguinte" à direita */
+    .zona-seguinte {
+      gap: 10px;
+    }
+
+    .zona-seguinte #botao-anterior {
+      margin-right: auto;
+    }
+
+    /* Botão secundário (contorno), usado no "Anterior" */
+    .botao-secundario {
+      color: var(--acento);
+      background: var(--cartao);
+      border: 2px solid var(--acento);
+      box-shadow: var(--sombra-leve);
+    }
+
+    .botao-secundario span[aria-hidden] {
+      font-size: 1.4rem;
+      line-height: 1;
+    }
+
+    /* Selo "A rever" no cabeçalho quando se volta a uma pergunta já respondida */
+    .selo-revisao {
+      margin-left: auto;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--aviso);
+      border-radius: 999px;
+      background: var(--aviso-suave);
+    }
+
+    /* Em revisão o temporizador fica parado e esbatido */
+    .em-revisao .temporizador-segundos {
+      opacity: 0.5;
+      animation: none;
+    }
+
+    /* Melhor pontuação no ecrã inicial */
+    .melhor-inicio {
+      margin: -8px 0 20px;
+      padding: 10px 14px;
+      font-weight: 700;
+      color: var(--aviso);
+      border-radius: var(--raio-pequeno);
+      background: var(--aviso-suave);
+    }
+
     /* Ao fazer scroll automático até ao feedback, deixa espaço para o
        cabeçalho fixo (em cima) e para o botão "Seguinte" (em baixo) */
     .feedback {
@@ -896,6 +945,93 @@
     .resultado .botao {
       width: 100%;
       max-width: 320px;
+    }
+
+    /* Recorde / melhor pontuação no ecrã final */
+    .recorde {
+      margin: 0 0 12px;
+      font-weight: 700;
+      color: var(--texto-suave);
+    }
+
+    .recorde.novo {
+      color: var(--aviso);
+      animation: pulsar 1.2s ease-in-out 3;
+    }
+
+    /* Resumo das perguntas erradas */
+    .erros {
+      margin: 0 0 24px;
+      text-align: left;
+    }
+
+    .erros h3 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    .erro {
+      margin-bottom: 10px;
+      padding: 14px;
+      border: 1px solid var(--borda);
+      border-left: 4px solid var(--errado);
+      border-radius: 12px;
+    }
+
+    .erro.erro-tempo {
+      border-left-color: var(--aviso);
+    }
+
+    .erro-tema {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--texto-suave);
+    }
+
+    .erro-pergunta {
+      margin: 0 0 10px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .erro-linha {
+      display: flex;
+      gap: 8px;
+      margin: 0 0 6px;
+      font-size: 0.93rem;
+      line-height: 1.4;
+    }
+
+    .erro-linha:last-child {
+      margin-bottom: 0;
+    }
+
+    .erro-linha b {
+      flex: none;
+    }
+
+    .erro-tua b    { color: var(--errado); }
+    .erro-semtempo b { color: var(--aviso); }
+    .erro-certa b  { color: var(--certo); }
+
+    .sem-erros {
+      margin: 0;
+      padding: 14px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--certo);
+      border-radius: 12px;
+      background: var(--certo-suave);
+    }
+
+    .nota-sorteio {
+      margin: 10px 0 0;
+      font-size: 0.85rem;
+      color: var(--texto-suave);
     }
 
     /* ==========================================================
@@ -1089,9 +1225,28 @@
         border-radius: 0 0 18px 18px;
       }
 
-      /* No telemóvel o "Seguinte" ocupa a largura toda: mais fácil de tocar */
-      .zona-seguinte .botao {
-        width: 100%;
+      /* No telemóvel o "Seguinte" ocupa o espaço que sobra: mais fácil de tocar */
+      .zona-seguinte #botao-seguinte {
+        flex: 1;
+      }
+
+      /* "Anterior" fica só com a seta, para poupar espaço */
+      .zona-seguinte #botao-anterior {
+        flex: none;
+        width: 56px;
+        padding: 0;
+      }
+
+      .texto-anterior {
+        display: none;
+      }
+
+      .melhor-inicio {
+        margin: -4px 0 16px;
+      }
+
+      .erro {
+        padding: 12px;
       }
     }
 
@@ -1122,21 +1277,26 @@
         <li><strong>4</strong><span>opções cada</span></li>
       </ul>
 
+      <!-- Melhor pontuação guardada neste aparelho (só aparece se existir) -->
+      <p class="melhor-inicio escondido" id="melhor-inicio"></p>
+
       <!-- O que o jogo contém: temas e como funciona o feedback -->
       <div class="conteudo-jogo">
         <h2>O que vais encontrar</h2>
         <ul class="temas" id="lista-temas"></ul>
         <ul class="como-funciona">
+          <li><span aria-hidden="true">🔀</span> <span id="texto-sorteio"></span></li>
           <li><span aria-hidden="true">✅</span> Se acertares, a opção fica verde e avanças.</li>
           <li><span aria-hidden="true">📊</span> Se errares ou o tempo acabar, vês a explicação, um exemplo prático com números e um gráfico.</li>
-          <li><span aria-hidden="true">🏁</span> No fim recebes a tua nota (de 0 a 20) e a revisão de cada pergunta.</li>
+          <li><span aria-hidden="true">↔️</span> Depois de responder, podes voltar às perguntas anteriores com as setas ‹ › (ou deslizando o dedo para os lados).</li>
+          <li><span aria-hidden="true">🏁</span> No fim recebes a tua nota (de 0 a 20), o resumo do que erraste com a resposta certa e a tua melhor pontuação.</li>
         </ul>
       </div>
 
       <div class="zona-comecar">
         <button class="botao" id="botao-comecar">Começar <span class="seta" aria-hidden="true">→</span></button>
       </div>
-      <p class="dica-teclado">Dica: podes responder com as teclas <kbd>A</kbd>–<kbd>D</kbd> e avançar com <kbd>Enter</kbd>.</p>
+      <p class="dica-teclado">Teclado: <kbd>A</kbd>–<kbd>D</kbd> ou <kbd>↑</kbd> <kbd>↓</kbd> para escolher, <kbd>Enter</kbd> para confirmar, <kbd>←</kbd> <kbd>→</kbd> para andar entre perguntas.</p>
     </section>
 
     <!-- ===== Ecrã da pergunta ===== -->
@@ -1145,6 +1305,7 @@
       <header class="cabecalho" id="zona-tempo">
         <div class="linha-topo">
           <span class="progresso" id="progresso"></span>
+          <span class="selo-revisao escondido" id="selo-revisao">A rever</span>
           <span class="temporizador-segundos" aria-live="off">
             <span aria-hidden="true">⏱</span><span id="segundos">20 s</span>
           </span>
@@ -1183,8 +1344,11 @@
         </div>
       </div>
 
-      <!-- Escondido até a pergunta estar respondida -->
+      <!-- Navegação: só aparece depois de a pergunta estar respondida -->
       <div class="zona-seguinte">
+        <button class="botao botao-secundario escondido" id="botao-anterior" aria-label="Pergunta anterior">
+          <span aria-hidden="true">‹</span><span class="texto-anterior">Anterior</span>
+        </button>
         <button class="botao escondido" id="botao-seguinte">Seguinte</button>
       </div>
     </section>
@@ -1200,6 +1364,7 @@
       </div>
 
       <p class="nota-final" id="nota-final"></p>
+      <p class="recorde" id="texto-recorde"></p>
       <p class="mensagem-resultado" id="mensagem-resultado"></p>
 
       <ul class="resumo">
@@ -1214,7 +1379,14 @@
         <ol id="lista-revisao"></ol>
       </div>
 
-      <button class="botao" id="botao-reiniciar">↻ Reiniciar</button>
+      <!-- Resumo das perguntas erradas, com a resposta certa -->
+      <div class="erros">
+        <h3>O que erraste</h3>
+        <div id="lista-erros"></div>
+      </div>
+
+      <button class="botao" id="botao-reiniciar">↻ Jogar novamente</button>
+      <p class="nota-sorteio">Cada jogo sorteia perguntas novas e baralha a ordem.</p>
     </section>
   </main>
 
@@ -1232,8 +1404,11 @@
              { tipo: "barras", titulo, unidade, referencia?, barras: [{ rotulo, valor, cor }] }
              { tipo: "linhas", titulo, unidade, eixoX, yMin?, series: [{ nome, cor, valores }] }
            cores possíveis: "bom", "mau", "neutro", "acento"
-       Para acrescentar uma pergunta, basta adicionar outro objeto
-       com a mesma estrutura ao fim do array.
+       Este array é o BANCO de perguntas (2 por tema). Em cada jogo é
+       sorteada uma pergunta de cada tema, e a ordem das perguntas e das
+       opções é baralhada. Para acrescentar uma pergunta, basta adicionar
+       outro objeto com a mesma estrutura; se o tema já existir, passa a
+       entrar no sorteio desse tema.
        ========================================================== */
 
     /**
@@ -1436,6 +1611,192 @@
             { rotulo: "6 meses", valor: 6000, cor: "bom" }
           ]
         }
+      },
+      /* ---------- Segunda pergunta de cada tema ----------
+         Em cada jogo é sorteada uma pergunta por tema, por isso
+         os jogos repetem algumas perguntas e trocam outras. */
+      {
+        tema: "Risco e retorno",
+        pergunta: "Porque é que, a longo prazo, as ações costumam render mais do que os depósitos?",
+        opcoes: [
+          "Porque os bancos são obrigados a pagar poucos juros nos depósitos.",
+          "Porque quem investe exige um retorno maior para aceitar as oscilações e o risco de perder dinheiro.",
+          "Porque as ações têm o capital garantido pelo Estado.",
+          "Porque, a longo prazo, as ações deixam de ter qualquer risco."
+        ],
+        correta: 1,
+        explicacao: "Quem compra ações aceita ver o valor subir e descer, e até perder dinheiro em alguns anos. Em troca dessa incerteza, o mercado tende a pagar um \"prémio de risco\": um retorno médio maior do que o das aplicações seguras, mas sem garantias.",
+        exemplo: "Se investires 1000 € durante 20 anos a 2% ao ano (depósito), ficas com cerca de 1486 €. A 7% ao ano (média histórica aproximada das ações globais, sem garantias), ficas com cerca de 3870 €.",
+        grafico: {
+          tipo: "linhas",
+          titulo: "1000 € durante 20 anos",
+          unidade: "€",
+          eixoX: "anos",
+          series: [
+            { nome: "Ações (média 7%)", cor: "bom", valores: serie(20, function (ano) { return 1000 * Math.pow(1.07, ano); }) },
+            { nome: "Depósito 2%", cor: "neutro", valores: serie(20, function (ano) { return 1000 * Math.pow(1.02, ano); }) }
+          ]
+        }
+      },
+      {
+        tema: "Diversificação",
+        pergunta: "Qual destas carteiras está mais diversificada?",
+        opcoes: [
+          "Ações de três bancos portugueses.",
+          "Ações de uma única empresa tecnológica muito conhecida.",
+          "Um ETF global com ações de milhares de empresas de vários países e setores.",
+          "Todo o dinheiro numa única obrigação de uma empresa."
+        ],
+        correta: 2,
+        explicacao: "Diversificar a sério é espalhar o dinheiro por muitas empresas, setores e países. Três bancos do mesmo país tendem a cair todos ao mesmo tempo quando o setor ou a economia corre mal.",
+        exemplo: "Numa crise bancária, uma carteira só com 3 bancos pode cair 40%. Se os bancos forem apenas cerca de 10% de um ETF global, essa mesma queda de 40% pesa à volta de 4% na carteira (40% × 10%).",
+        grafico: {
+          tipo: "barras",
+          titulo: "Queda da carteira se os bancos caírem 40%",
+          unidade: "%",
+          barras: [
+            { rotulo: "Só 3 bancos", valor: 40, cor: "mau" },
+            { rotulo: "ETF global", valor: 4, cor: "bom" }
+          ]
+        }
+      },
+      {
+        tema: "Juros compostos",
+        pergunta: "O que mais aumenta o efeito dos juros compostos?",
+        opcoes: [
+          "Levantar os juros todos os anos.",
+          "Mudar de investimento todos os meses.",
+          "Investir só nos anos em que a bolsa sobe.",
+          "Começar cedo e deixar o dinheiro investido durante muitos anos."
+        ],
+        correta: 3,
+        explicacao: "Os juros compostos crescem com o tempo: quanto mais anos os juros ficam a render juros, maior a bola de neve. Por isso, começar cedo pesa muitas vezes mais do que investir montantes maiores mais tarde.",
+        exemplo: "A Ana investe 100 € por mês dos 25 aos 35 anos e depois para (12 000 € no total). O Rui investe 100 € por mês dos 35 aos 65 anos (36 000 €). A 6% ao ano, aos 65 a Ana tem cerca de 98 700 € e o Rui cerca de 100 500 €: quase o mesmo, com um terço do dinheiro.",
+        grafico: {
+          tipo: "barras",
+          titulo: "Quanto investiram e quanto têm aos 65 anos (6% ao ano)",
+          unidade: "€",
+          barras: [
+            { rotulo: "Ana investiu", valor: 12000, cor: "neutro" },
+            { rotulo: "Ana aos 65", valor: 98700, cor: "bom" },
+            { rotulo: "Rui investiu", valor: 36000, cor: "neutro" },
+            { rotulo: "Rui aos 65", valor: 100500, cor: "acento" }
+          ]
+        }
+      },
+      {
+        tema: "ETFs e fundos de índice",
+        pergunta: "Qual é uma vantagem típica de um ETF de índice em relação a um fundo de gestão ativa?",
+        opcoes: [
+          "Garante sempre um retorno superior ao do mercado.",
+          "Não perde valor quando a bolsa cai.",
+          "Tem custos anuais normalmente muito mais baixos.",
+          "As ações são escolhidas a dedo por um gestor que prevê o futuro."
+        ],
+        correta: 2,
+        explicacao: "Um ETF de índice limita-se a copiar o índice, por isso precisa de pouca gestão e cobra pouco. Os fundos ativos pagam equipas para tentar bater o mercado, cobram mais e, a longo prazo, a maioria não o consegue depois de descontados os custos.",
+        exemplo: "Com 10 000 € investidos, um ETF com TER de 0,2% custa cerca de 20 € por ano. Um fundo ativo com 1,8% custa cerca de 180 € por ano, ou seja, 9 vezes mais, aconteça o que acontecer ao mercado.",
+        grafico: {
+          tipo: "barras",
+          titulo: "Custo anual com 10 000 € investidos",
+          unidade: "€",
+          barras: [
+            { rotulo: "ETF (0,2%)", valor: 20, cor: "bom" },
+            { rotulo: "Fundo ativo (1,8%)", valor: 180, cor: "mau" }
+          ]
+        }
+      },
+      {
+        tema: "Ações vs. obrigações",
+        pergunta: "À medida que se aproxima o momento em que vais precisar do dinheiro (por exemplo, a reforma), o que costuma fazer sentido?",
+        opcoes: [
+          "Aumentar aos poucos a parte em obrigações e aplicações mais estáveis.",
+          "Passar tudo para ações para tentar recuperar o tempo perdido.",
+          "Vender tudo e guardar as notas em casa.",
+          "Pôr tudo numa só ação com um bom histórico."
+        ],
+        correta: 0,
+        explicacao: "As obrigações costumam oscilar menos do que as ações. Perto do objetivo já não há tempo para recuperar de uma grande queda, por isso reduz-se o risco aos poucos, trocando parte das ações por obrigações.",
+        exemplo: "Numa queda de 30% das ações, uma carteira de 50 000 € só com ações perde 15 000 €. Uma carteira com metade em ações e metade em obrigações (se as obrigações se mantiverem estáveis) perde cerca de 7500 €.",
+        grafico: {
+          tipo: "barras",
+          titulo: "Perda numa queda de 30% das ações (carteira de 50 000 €)",
+          unidade: "€",
+          barras: [
+            { rotulo: "100% ações", valor: 15000, cor: "mau" },
+            { rotulo: "50% ações / 50% obrig.", valor: 7500, cor: "acento" }
+          ]
+        }
+      },
+      {
+        tema: "Inflação",
+        pergunta: "Um depósito rende 2% ao ano e a inflação é de 3%. O que acontece ao teu poder de compra?",
+        opcoes: [
+          "Aumenta cerca de 2% ao ano.",
+          "Aumenta cerca de 5% ao ano.",
+          "Fica exatamente igual.",
+          "Diminui cerca de 1% ao ano."
+        ],
+        correta: 3,
+        explicacao: "O que interessa é o rendimento real: o juro menos a inflação. Se os preços sobem mais depressa do que o teu dinheiro, mesmo a ganhar juros consegues comprar cada vez menos coisas.",
+        exemplo: "Com 5000 € a 2% durante 10 anos ficas com cerca de 6095 € na conta. Mas, com inflação de 3% ao ano, esse valor só compra o equivalente a cerca de 4535 € de hoje.",
+        grafico: {
+          tipo: "linhas",
+          titulo: "5000 € a 2% ao ano com inflação de 3%",
+          unidade: "€",
+          eixoX: "anos",
+          yMin: 3000,
+          series: [
+            { nome: "Valor na conta", cor: "acento", valores: serie(10, function (ano) { return 5000 * Math.pow(1.02, ano); }) },
+            { nome: "Poder de compra real", cor: "mau", valores: serie(10, function (ano) { return 5000 * Math.pow(1.02 / 1.03, ano); }) }
+          ]
+        }
+      },
+      {
+        tema: "Custos e comissões",
+        pergunta: "Qual destes custos tem mais impacto a longo prazo num investimento?",
+        opcoes: [
+          "Uma comissão única de 5 € na compra.",
+          "Uma comissão anual de 1,5% sobre todo o valor investido.",
+          "Uma comissão de 10 € para abrir a conta.",
+          "Uma comissão de 2 € num levantamento feito uma vez por ano."
+        ],
+        correta: 1,
+        explicacao: "Uma comissão anual em percentagem é cobrada todos os anos sobre todo o valor acumulado, incluindo os ganhos. Por isso cresce com o investimento e, ao longo de décadas, come uma fatia grande do resultado.",
+        exemplo: "Com 20 000 € investidos durante 30 anos a 6% ao ano, sem custos ficas com cerca de 114 870 €. Com uma comissão anual de 1,5% (4,5% líquido) ficas com cerca de 74 906 €: perdes quase 40 000 €.",
+        grafico: {
+          tipo: "linhas",
+          titulo: "20 000 € durante 30 anos a 6% ao ano",
+          unidade: "€",
+          eixoX: "anos",
+          series: [
+            { nome: "Sem comissão", cor: "bom", valores: serie(30, function (ano) { return 20000 * Math.pow(1.06, ano); }) },
+            { nome: "Comissão de 1,5%", cor: "mau", valores: serie(30, function (ano) { return 20000 * Math.pow(1.045, ano); }) }
+          ]
+        }
+      },
+      {
+        tema: "Fundo de emergência e horizonte temporal",
+        pergunta: "Vais precisar de 15 000 € daqui a 2 anos para a entrada de uma casa. Onde faz mais sentido ter esse dinheiro?",
+        opcoes: [
+          "Em ações de empresas tecnológicas, para crescer mais depressa.",
+          "Num depósito a prazo ou em certificados de aforro, com risco baixo.",
+          "Em criptomoedas.",
+          "Num único ETF de ações de países emergentes."
+        ],
+        correta: 1,
+        explicacao: "O horizonte temporal é o tempo que falta até precisares do dinheiro. Para prazos curtos, a prioridade é não perder capital, porque as ações podem cair muito num só ano e não há tempo para recuperar.",
+        exemplo: "Se as ações caírem 25% no ano antes da compra, os 15 000 € passam a 11 250 € e falta-te dinheiro para a entrada. Num depósito a 2,5% ao ano, ao fim de 2 anos terias cerca de 15 759 €.",
+        grafico: {
+          tipo: "barras",
+          titulo: "Quanto tens daqui a 2 anos (precisas de 15 000 €)",
+          unidade: "€",
+          referencia: { valor: 15000, rotulo: "Precisas" },
+          barras: [
+            { rotulo: "Depósito 2,5%", valor: 15759, cor: "bom" },
+            { rotulo: "Ações com queda de 25%", valor: 11250, cor: "mau" }
+          ]
+        }
       }
     ];
 
@@ -1449,12 +1810,10 @@
     /* ==========================================================
        ESTADO DO QUIZ
        ========================================================== */
-    let indiceAtual = 0;    // posição da pergunta que está a ser mostrada
-    let pontuacao = 0;      // número de respostas certas
-    let erradas = 0;        // número de respostas erradas
-    let semTempo = 0;       // número de perguntas em que o tempo acabou
-    let resultados = [];    // "certo" | "errado" | "tempo" para cada pergunta (revisão final)
-    let respondida = false; // impede responder duas vezes à mesma pergunta
+    let jogo = [];          // perguntas sorteadas para o jogo atual (cópias baralhadas)
+    let indiceAtual = 0;    // pergunta que está a ser mostrada
+    let indiceMaximo = 0;   // pergunta mais avançada a que já se chegou neste jogo
+    let respondida = false; // se a pergunta mostrada já tem resposta
     let intervaloTempo = null; // identificador do setInterval do temporizador
     let fimDoTempo = 0;        // instante (ms) em que o tempo da pergunta acaba
 
@@ -1463,13 +1822,16 @@
        ========================================================== */
     const elEcraInicial = document.getElementById("ecra-inicial");
     const elTextoRegras = document.getElementById("texto-regras");
+    const elTextoSorteio = document.getElementById("texto-sorteio");
     const elDestaquePerguntas = document.getElementById("destaque-perguntas");
     const elDestaqueTempo = document.getElementById("destaque-tempo");
+    const elMelhorInicio = document.getElementById("melhor-inicio");
     const elListaTemas = document.getElementById("lista-temas");
     const elBotaoComecar = document.getElementById("botao-comecar");
 
     const elEcraPergunta = document.getElementById("ecra-pergunta");
     const elProgresso = document.getElementById("progresso");
+    const elSeloRevisao = document.getElementById("selo-revisao");
     const elBarraProgresso = document.getElementById("barra-progresso");
     const elZonaTempo = document.getElementById("zona-tempo");
     const elSegundos = document.getElementById("segundos");
@@ -1483,6 +1845,7 @@
     const elFeedbackDetalhes = document.getElementById("feedback-detalhes");
     const elFeedbackExplicacao = document.getElementById("feedback-explicacao");
     const elFeedbackExemplo = document.getElementById("feedback-exemplo");
+    const elBotaoAnterior = document.getElementById("botao-anterior");
     const elBotaoSeguinte = document.getElementById("botao-seguinte");
     const elGrafico = document.getElementById("grafico");
     const elGraficoTitulo = document.getElementById("grafico-titulo");
@@ -1495,12 +1858,13 @@
     const elTextoPontuacao = document.getElementById("texto-pontuacao");
     const elMensagemResultado = document.getElementById("mensagem-resultado");
     const elNotaFinal = document.getElementById("nota-final");
+    const elTextoRecorde = document.getElementById("texto-recorde");
     const elListaRevisao = document.getElementById("lista-revisao");
+    const elListaErros = document.getElementById("lista-erros");
     const elResumoCertas = document.getElementById("resumo-certas");
     const elResumoErradas = document.getElementById("resumo-erradas");
     const elResumoTempo = document.getElementById("resumo-tempo");
     const elBotaoReiniciar = document.getElementById("botao-reiniciar");
-
     /* ==========================================================
        FUNÇÕES AUXILIARES DE INTERFACE
        ========================================================== */
@@ -1610,7 +1974,9 @@
       } else {
         texto = arredondado.toLocaleString("pt-PT");
       }
-      return unidade === "€" ? texto + " €" : texto;
+      if (unidade === "€") return texto + " €";
+      if (unidade === "%") return texto + "%";
+      return texto;
     }
 
     /**
@@ -1868,75 +2234,188 @@
     }
 
     /* ==========================================================
+       SORTEIO DAS PERGUNTAS
+       ========================================================== */
+
+    /**
+     * Baralha um array (algoritmo de Fisher–Yates) e devolve uma cópia.
+     * @param {Array} lista
+     * @returns {Array}
+     */
+    function baralhar(lista) {
+      const copia = lista.slice();
+      for (let i = copia.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = copia[i];
+        copia[i] = copia[j];
+        copia[j] = temp;
+      }
+      return copia;
+    }
+
+    /**
+     * Lista de temas pela ordem em que aparecem no banco de perguntas.
+     * @returns {string[]}
+     */
+    function listarTemas() {
+      const temas = [];
+      perguntas.forEach(function (p) {
+        if (temas.indexOf(p.tema) === -1) temas.push(p.tema);
+      });
+      return temas;
+    }
+
+    /**
+     * Prepara um jogo novo:
+     *  1. sorteia UMA pergunta de cada tema (por isso alguns jogos repetem
+     *     perguntas e outros trazem perguntas diferentes);
+     *  2. baralha a ordem das perguntas;
+     *  3. baralha a ordem das opções de cada pergunta e corrige o índice da certa.
+     * O banco original nunca é alterado: o jogo usa cópias.
+     * @returns {Object[]}
+     */
+    function sortearJogo() {
+      const escolhidas = listarTemas().map(function (tema) {
+        const doTema = perguntas.filter(function (p) { return p.tema === tema; });
+        return doTema[Math.floor(Math.random() * doTema.length)];
+      });
+
+      return baralhar(escolhidas).map(function (original) {
+        // ordem[k] = índice original da opção que fica na posição k
+        const ordem = baralhar(original.opcoes.map(function (_, i) { return i; }));
+        return {
+          tema: original.tema,
+          pergunta: original.pergunta,
+          opcoes: ordem.map(function (i) { return original.opcoes[i]; }),
+          correta: ordem.indexOf(original.correta),
+          explicacao: original.explicacao,
+          exemplo: original.exemplo,
+          grafico: original.grafico,
+          resposta: null // { tipo: "certo"|"errado"|"tempo", escolhida: índice|null, restanteMs }
+        };
+      });
+    }
+
+    /* ==========================================================
+       MELHOR PONTUAÇÃO (guardada no próprio browser)
+       Usa localStorage dentro de try/catch: em modo privado ou com
+       os dados bloqueados, o quiz continua a funcionar sem recorde.
+       ========================================================== */
+    const CHAVE_RECORDE = "quiz-investimentos:melhor";
+
+    /** @returns {{certas:number,total:number,data:string}|null} */
+    function lerRecorde() {
+      try {
+        const texto = localStorage.getItem(CHAVE_RECORDE);
+        return texto ? JSON.parse(texto) : null;
+      } catch (erro) {
+        return null;
+      }
+    }
+
+    function guardarRecorde(recorde) {
+      try {
+        localStorage.setItem(CHAVE_RECORDE, JSON.stringify(recorde));
+      } catch (erro) {
+        /* sem armazenamento disponível: ignora */
+      }
+    }
+
+    /** Converte certas/total numa nota de 0 a 20 (uma casa decimal). */
+    function notaDe20(certas, total) {
+      return Math.round((certas / total) * 200) / 10;
+    }
+
+    function textoNota(certas, total) {
+      return notaDe20(certas, total).toLocaleString("pt-PT") + "/20";
+    }
+
+    /* ==========================================================
        FLUXO DO QUIZ
        ========================================================== */
 
     /**
-     * Mostra o ecrã inicial com as regras.
+     * Mostra o ecrã inicial com as regras, os temas e o recorde.
      */
     function mostrarEcraInicial() {
+      const temas = listarTemas();
       elTextoRegras.textContent =
-        "Vais responder a " + perguntas.length + " perguntas de escolha múltipla sobre investimentos. " +
+        "Vais responder a " + temas.length + " perguntas de escolha múltipla sobre investimentos. " +
         "Cada pergunta tem tempo limitado: tens " + TEMPO_POR_PERGUNTA + " segundos para escolher a resposta. " +
         "Se o tempo acabar, a pergunta conta como errada.";
-      elDestaquePerguntas.textContent = perguntas.length;
+      elTextoSorteio.textContent =
+        "Em cada jogo são sorteadas " + temas.length + " perguntas de um banco de " + perguntas.length +
+        " (uma por tema) e a ordem das perguntas e das opções muda sempre.";
+      elDestaquePerguntas.textContent = temas.length;
       elDestaqueTempo.textContent = TEMPO_POR_PERGUNTA + " s";
 
-      // Lista de temas, um por pergunta
+      // Lista de temas
       elListaTemas.innerHTML = "";
-      perguntas.forEach(function (p) {
+      temas.forEach(function (tema) {
         const item = document.createElement("li");
-        item.textContent = p.tema;
+        item.textContent = tema;
         elListaTemas.appendChild(item);
       });
+
+      // Melhor pontuação, se já houver
+      const recorde = lerRecorde();
+      if (recorde) {
+        elMelhorInicio.textContent = "🏆 A tua melhor pontuação: " + recorde.certas + "/" + recorde.total +
+          " (nota " + textoNota(recorde.certas, recorde.total) + ")";
+        elMelhorInicio.classList.remove("escondido");
+      } else {
+        elMelhorInicio.classList.add("escondido");
+      }
+
       mostrarEcra(elEcraInicial);
     }
 
     /**
-     * Começa (ou recomeça) o quiz a partir da primeira pergunta.
+     * Começa um jogo novo: sorteia as perguntas e mostra a primeira.
      */
     function comecar() {
-      indiceAtual = 0;
-      pontuacao = 0;
-      erradas = 0;
-      semTempo = 0;
-      resultados = [];
+      jogo = sortearJogo();
+      indiceMaximo = 0;
       mostrarEcra(elEcraPergunta);
-      mostrarPergunta();
+      mostrarPergunta(0);
     }
 
     /**
-     * Mostra no ecrã a pergunta indicada por "indiceAtual":
-     * progresso, tema, texto e um botão por cada opção.
-     * Reinicia o temporizador do zero.
+     * Mostra a pergunta de índice "indice".
+     *  - Se ainda não tem resposta: pergunta "ao vivo", com temporizador do zero.
+     *  - Se já tem resposta: modo de revisão (opções bloqueadas, feedback
+     *    guardado, temporizador parado).
+     * @param {number} indice
      */
-    function mostrarPergunta() {
-      const atual = perguntas[indiceAtual];
-      respondida = false;
+    function mostrarPergunta(indice) {
+      pararTemporizador();
+      indiceAtual = indice;
+      const atual = jogo[indice];
+      respondida = atual.resposta !== null;
 
       // Progresso: "Pergunta 3/8" e barra correspondente
       elProgresso.innerHTML = "";
-      elProgresso.append("Pergunta " + (indiceAtual + 1));
+      elProgresso.append("Pergunta " + (indice + 1));
       const total = document.createElement("small");
-      total.textContent = "/" + perguntas.length;
+      total.textContent = "/" + jogo.length;
       elProgresso.appendChild(total);
-      elBarraProgresso.style.width = ((indiceAtual + 1) / perguntas.length) * 100 + "%";
+      elBarraProgresso.style.width = ((indice + 1) / jogo.length) * 100 + "%";
 
       elTema.textContent = atual.tema;
       elTextoPergunta.textContent = atual.pergunta;
 
-      // Limpa as opções da pergunta anterior e cria as novas:
+      // Cria as opções:
       // <button class="opcao"><span class="letra">A</span><span class="opcao-texto">...</span></button>
       elOpcoes.innerHTML = "";
       elOpcoes.classList.remove("respondida");
-      atual.opcoes.forEach(function (textoOpcao, indice) {
+      atual.opcoes.forEach(function (textoOpcao, i) {
         const botao = document.createElement("button");
         botao.className = "opcao";
         botao.type = "button";
 
         const letra = document.createElement("span");
         letra.className = "letra";
-        letra.textContent = LETRAS[indice];
+        letra.textContent = LETRAS[i];
 
         const texto = document.createElement("span");
         texto.className = "opcao-texto";
@@ -1944,25 +2423,53 @@
 
         botao.append(letra, texto);
         botao.addEventListener("click", function () {
-          responder(indice);
+          responder(i);
         });
         elOpcoes.appendChild(botao);
       });
 
-      // Esconde o feedback e o "Seguinte" até haver resposta
       elFeedback.classList.add("escondido");
-      elBotaoSeguinte.classList.add("escondido");
-
-      // Na última pergunta o botão passa a dizer "Ver resultado"
-      elBotaoSeguinte.innerHTML =
-        (indiceAtual === perguntas.length - 1 ? "Ver resultado" : "Seguinte") +
-        ' <span class="seta" aria-hidden="true">→</span>';
-
-      // Animação de entrada e volta ao topo da página
       reanimar(elCorpoPergunta);
       window.scrollTo({ top: 0, behavior: menosAnimacoes ? "auto" : "smooth" });
 
-      iniciarTemporizador();
+      if (respondida) {
+        // Revisão: mostra o estado guardado, sem animações nem scroll automático
+        elZonaTempo.classList.add("em-revisao");
+        elSeloRevisao.classList.toggle("escondido", indice === indiceMaximo);
+        mostrarTempoParado(atual.resposta.restanteMs);
+        pintarResposta(false);
+      } else {
+        elZonaTempo.classList.remove("em-revisao");
+        elSeloRevisao.classList.add("escondido");
+        iniciarTemporizador();
+      }
+      atualizarNavegacao();
+    }
+
+    /**
+     * Mostra no cabeçalho o tempo que restava quando se respondeu.
+     * @param {number} restanteMs
+     */
+    function mostrarTempoParado(restanteMs) {
+      const restanteSeg = Math.ceil(restanteMs / 1000);
+      elSegundos.textContent = restanteSeg + " s";
+      elBarraTempo.style.width = (restanteMs / (TEMPO_POR_PERGUNTA * 1000)) * 100 + "%";
+      elZonaTempo.classList.toggle("alerta", restanteSeg <= TEMPO_ALERTA);
+    }
+
+    /**
+     * Mostra ou esconde os botões "Anterior" e "Seguinte" e acerta o texto.
+     * Só se pode navegar depois de a pergunta mostrada estar respondida
+     * (assim não dá para fugir de uma pergunta com o tempo a contar).
+     */
+    function atualizarNavegacao() {
+      elBotaoAnterior.classList.toggle("escondido", !(respondida && indiceAtual > 0));
+      elBotaoSeguinte.classList.toggle("escondido", !respondida);
+
+      const ultima = indiceAtual === jogo.length - 1;
+      elBotaoSeguinte.innerHTML =
+        (ultima ? "Ver resultado" : "Seguinte") +
+        ' <span class="seta" aria-hidden="true">→</span>';
     }
 
     /**
@@ -1971,16 +2478,16 @@
      */
     function responder(indiceEscolhido) {
       if (respondida) return;
+      const restanteMs = Math.max(0, fimDoTempo - Date.now());
       pararTemporizador();
 
-      const acertou = indiceEscolhido === perguntas[indiceAtual].correta;
-      if (acertou) {
-        pontuacao++;
-        mostrarFeedback("certo", "✅ Certo!", null);
-      } else {
-        erradas++;
-        mostrarFeedback("errado", "❌ Errado.", indiceEscolhido);
-      }
+      const certa = indiceEscolhido === jogo[indiceAtual].correta;
+      jogo[indiceAtual].resposta = {
+        tipo: certa ? "certo" : "errado",
+        escolhida: indiceEscolhido,
+        restanteMs: restanteMs
+      };
+      pintarResposta(true);
     }
 
     /**
@@ -1989,25 +2496,22 @@
     function tempoEsgotado() {
       if (respondida) return;
       pararTemporizador();
-      semTempo++;
-      mostrarFeedback("tempo", "⏰ Tempo esgotado!", null);
+      jogo[indiceAtual].resposta = { tipo: "tempo", escolhida: null, restanteMs: 0 };
+      pintarResposta(true);
     }
 
     /**
-     * Bloqueia as opções, pinta-as e mostra o feedback.
+     * Bloqueia as opções, pinta-as e mostra o feedback da pergunta atual.
      *  - Se acertou: a opção certa fica verde e aparece só "Certo!".
      *  - Se errou ou o tempo acabou: a escolhida fica vermelha (se houver),
-     *    a certa fica verde e aparece a explicação e o exemplo prático.
-     * No fim mostra o botão "Seguinte".
-     * @param {"certo"|"errado"|"tempo"} tipo - resultado da pergunta
-     * @param {string} titulo - mensagem de topo do feedback
-     * @param {number|null} indiceErrado - opção errada escolhida, ou null
+     *    a certa fica verde e aparece a explicação, o exemplo e o gráfico.
+     * @param {boolean} acabadaDeResponder - true logo após responder
+     *        (faz scroll até ao feedback); false quando se volta a uma pergunta
      */
-    function mostrarFeedback(tipo, titulo, indiceErrado) {
+    function pintarResposta(acabadaDeResponder) {
       respondida = true;
-      resultados[indiceAtual] = tipo;
-
-      const atual = perguntas[indiceAtual];
+      const atual = jogo[indiceAtual];
+      const resposta = atual.resposta;
       const botoes = elOpcoes.querySelectorAll(".opcao");
 
       // Bloqueia todas as opções
@@ -2018,16 +2522,17 @@
 
       // Cores: certa a verde, escolhida errada a vermelho
       botoes[atual.correta].classList.add("certa");
-      if (indiceErrado !== null) {
-        botoes[indiceErrado].classList.add("errada");
+      if (resposta.tipo === "errado") {
+        botoes[resposta.escolhida].classList.add("errada");
       }
 
       // Caixa de feedback com a cor do tipo de resultado
-      elFeedbackTitulo.textContent = titulo;
+      const titulos = { certo: "✅ Certo!", errado: "❌ Errado.", tempo: "⏰ Tempo esgotado!" };
+      elFeedbackTitulo.textContent = titulos[resposta.tipo];
       elFeedback.classList.remove("feedback-certo", "feedback-errado", "feedback-tempo");
-      elFeedback.classList.add("feedback-" + tipo);
+      elFeedback.classList.add("feedback-" + resposta.tipo);
 
-      if (tipo === "certo") {
+      if (resposta.tipo === "certo") {
         elFeedbackDetalhes.classList.add("escondido");
       } else {
         elFeedbackExplicacao.textContent = atual.explicacao;
@@ -2037,13 +2542,39 @@
       elFeedback.classList.remove("escondido");
 
       // O gráfico só é desenhado depois de a caixa estar visível (para medir a largura)
-      desenharGrafico(tipo === "certo" ? null : atual.grafico);
+      desenharGrafico(resposta.tipo === "certo" ? null : atual.grafico);
 
-      // Só agora aparece o botão para avançar
-      elBotaoSeguinte.classList.remove("escondido");
+      atualizarNavegacao();
 
-      // No telemóvel, desliza até à explicação para ela ficar à vista
-      mostrarNoEcra(elFeedback);
+      // Logo após responder, no telemóvel, desliza até à explicação
+      if (acabadaDeResponder) {
+        mostrarNoEcra(elFeedback);
+        // O foco passa para o "Seguinte", para o Enter avançar logo
+        elBotaoSeguinte.focus({ preventScroll: true });
+      }
+    }
+
+    /**
+     * Avança: para a pergunta seguinte já vista, para uma pergunta nova
+     * ou, depois da última, para o ecrã de resultado.
+     */
+    function avancar() {
+      if (!respondida) return; // só avança depois de responder
+      if (indiceAtual < jogo.length - 1) {
+        const proxima = indiceAtual + 1;
+        indiceMaximo = Math.max(indiceMaximo, proxima);
+        mostrarPergunta(proxima);
+      } else {
+        mostrarResultado();
+      }
+    }
+
+    /**
+     * Recua para a pergunta anterior (em modo de revisão).
+     */
+    function recuar() {
+      if (!respondida || indiceAtual === 0) return;
+      mostrarPergunta(indiceAtual - 1);
     }
 
     /**
@@ -2066,45 +2597,50 @@
     }
 
     /**
-     * Avança para a pergunta seguinte ou, se já não houver mais,
-     * mostra o ecrã de resultado.
-     */
-    function seguinte() {
-      if (!respondida) return; // segurança: só avança depois de responder
-      indiceAtual++;
-      if (indiceAtual < perguntas.length) {
-        mostrarPergunta();
-      } else {
-        mostrarResultado();
-      }
-    }
-
-    /**
-     * Mostra o ecrã final com a pontuação, o anel de percentagem,
-     * o resumo e uma mensagem conforme o resultado.
+     * Mostra o ecrã final: pontuação, nota, recorde, resumo,
+     * revisão por tema e as perguntas erradas com a resposta certa.
      */
     function mostrarResultado() {
       pararTemporizador();
       mostrarEcra(elEcraResultado);
 
-      const total = perguntas.length;
-      const resultado = mensagemPorResultado(pontuacao, total);
+      // Contagens a partir das respostas guardadas
+      const total = jogo.length;
+      let certas = 0, erradas = 0, semTempo = 0;
+      jogo.forEach(function (q) {
+        if (q.resposta.tipo === "certo") certas++;
+        else if (q.resposta.tipo === "errado") erradas++;
+        else semTempo++;
+      });
+
+      const resultado = mensagemPorResultado(certas, total);
       elEmojiResultado.textContent = resultado.emoji;
       elMensagemResultado.textContent = resultado.mensagem;
-      elResumoCertas.textContent = pontuacao;
+      elResumoCertas.textContent = certas;
       elResumoErradas.textContent = erradas;
       elResumoTempo.textContent = semTempo;
 
-      // Nota de 0 a 20 (escala portuguesa) e percentagem
-      const percentagem = Math.round((pontuacao / total) * 100);
-      const nota = Math.round((pontuacao / total) * 20 * 10) / 10;
-      elNotaFinal.textContent = "Nota: " + nota.toLocaleString("pt-PT") + " / 20 · " + percentagem + "% certas";
+      const percentagem = Math.round((certas / total) * 100);
+      elNotaFinal.textContent = "Nota: " + textoNota(certas, total) + " · " + percentagem + "% certas";
 
-      // Revisão pergunta a pergunta
+      // Melhor pontuação: compara com a guardada e atualiza se for maior
+      const anterior = lerRecorde();
+      elTextoRecorde.classList.remove("novo");
+      if (!anterior || certas > anterior.certas) {
+        guardarRecorde({ certas: certas, total: total, data: new Date().toISOString() });
+        elTextoRecorde.textContent = anterior
+          ? "🏆 Novo recorde! Antes tinhas " + anterior.certas + "/" + anterior.total + "."
+          : "🏆 Primeira pontuação guardada como recorde.";
+        elTextoRecorde.classList.add("novo");
+      } else {
+        elTextoRecorde.textContent = "🏆 Melhor pontuação: " + anterior.certas + "/" + anterior.total +
+          " (nota " + textoNota(anterior.certas, anterior.total) + ")";
+      }
+
+      // Revisão por tema (pela ordem em que as perguntas saíram)
       const textos = { certo: "✓ Certa", errado: "✗ Errada", tempo: "⏱ Sem tempo" };
       elListaRevisao.innerHTML = "";
-      perguntas.forEach(function (p, i) {
-        const estado = resultados[i] || "tempo";
+      jogo.forEach(function (q, i) {
         const item = document.createElement("li");
 
         const num = document.createElement("span");
@@ -2113,17 +2649,69 @@
 
         const tema = document.createElement("span");
         tema.className = "tema-rev";
-        tema.textContent = p.tema;
+        tema.textContent = q.tema;
 
         const est = document.createElement("span");
-        est.className = "estado estado-" + estado;
-        est.textContent = textos[estado];
+        est.className = "estado estado-" + q.resposta.tipo;
+        est.textContent = textos[q.resposta.tipo];
 
         item.append(num, tema, est);
         elListaRevisao.appendChild(item);
       });
 
-      animarPontuacao(pontuacao, total);
+      mostrarErros();
+      animarPontuacao(certas, total);
+    }
+
+    /**
+     * Lista as perguntas erradas (ou sem tempo) com a resposta dada
+     * e a resposta certa.
+     */
+    function mostrarErros() {
+      elListaErros.innerHTML = "";
+      const erradas = jogo.filter(function (q) { return q.resposta.tipo !== "certo"; });
+
+      if (erradas.length === 0) {
+        const p = document.createElement("p");
+        p.className = "sem-erros";
+        p.textContent = "Não erraste nenhuma pergunta. 🎉";
+        elListaErros.appendChild(p);
+        return;
+      }
+
+      /** Cria uma linha "rótulo: texto" com a classe indicada. */
+      function linha(classe, rotulo, texto) {
+        const p = document.createElement("p");
+        p.className = "erro-linha " + classe;
+        const b = document.createElement("b");
+        b.textContent = rotulo;
+        const span = document.createElement("span");
+        span.textContent = texto;
+        p.append(b, span);
+        return p;
+      }
+
+      erradas.forEach(function (q) {
+        const cartao = document.createElement("div");
+        cartao.className = "erro" + (q.resposta.tipo === "tempo" ? " erro-tempo" : "");
+
+        const tema = document.createElement("span");
+        tema.className = "erro-tema";
+        tema.textContent = q.tema;
+
+        const pergunta = document.createElement("p");
+        pergunta.className = "erro-pergunta";
+        pergunta.textContent = q.pergunta;
+
+        cartao.append(tema, pergunta);
+        if (q.resposta.tipo === "tempo") {
+          cartao.appendChild(linha("erro-semtempo", "⏱", "Não respondeste a tempo."));
+        } else {
+          cartao.appendChild(linha("erro-tua", "✗", "A tua resposta: " + q.opcoes[q.resposta.escolhida]));
+        }
+        cartao.appendChild(linha("erro-certa", "✓", "Resposta certa: " + q.opcoes[q.correta]));
+        elListaErros.appendChild(cartao);
+      });
     }
 
     /**
@@ -2154,38 +2742,97 @@
     }
 
     /* ==========================================================
-       TECLADO (opcional, para computador)
-       A–D ou 1–4 escolhem a opção; Enter avança.
+       TECLADO (computador e telemóvel/tablet com teclado)
+         ← / →        pergunta anterior / seguinte (depois de responder)
+         ↑ / ↓        mudar de opção
+         Enter/Espaço escolher a opção com foco, ou avançar
+         A–D ou 1–4   escolher diretamente uma opção
        ========================================================== */
     document.addEventListener("keydown", function (evento) {
       if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
-      const tecla = evento.key.toUpperCase();
+      const tecla = evento.key;
 
-      // Ecrã inicial ou final: Enter começa/reinicia
-      if (tecla === "ENTER" && !elEcraInicial.classList.contains("escondido")) {
-        evento.preventDefault();
-        comecar();
+      // Ecrã inicial: Enter ou → começam
+      if (!elEcraInicial.classList.contains("escondido")) {
+        if (tecla === "Enter" || tecla === "ArrowRight") {
+          evento.preventDefault();
+          comecar();
+        }
         return;
       }
 
       if (elEcraPergunta.classList.contains("escondido")) return;
 
+      // Setas para a frente e para trás
+      if (tecla === "ArrowRight") {
+        evento.preventDefault();
+        avancar();
+        return;
+      }
+      if (tecla === "ArrowLeft") {
+        evento.preventDefault();
+        recuar();
+        return;
+      }
+
+      // Setas para cima/baixo: percorrer as opções (só antes de responder)
+      if ((tecla === "ArrowDown" || tecla === "ArrowUp") && !respondida) {
+        evento.preventDefault();
+        const botoes = Array.prototype.slice.call(elOpcoes.querySelectorAll(".opcao"));
+        const atual = botoes.indexOf(document.activeElement);
+        let proximo;
+        if (atual === -1) {
+          proximo = tecla === "ArrowDown" ? 0 : botoes.length - 1;
+        } else {
+          proximo = (atual + (tecla === "ArrowDown" ? 1 : -1) + botoes.length) % botoes.length;
+        }
+        botoes[proximo].focus();
+        return;
+      }
+
       // Escolher opção pela letra ou pelo número
-      let indice = LETRAS.indexOf(tecla);
+      const maiuscula = tecla.toUpperCase();
+      let indice = LETRAS.indexOf(maiuscula);
       if (indice === -1 && tecla >= "1" && tecla <= "4") {
         indice = Number(tecla) - 1;
       }
-      if (indice !== -1 && !respondida && indice < perguntas[indiceAtual].opcoes.length) {
+      if (indice !== -1 && !respondida && indice < jogo[indiceAtual].opcoes.length) {
         responder(indice);
         return;
       }
 
-      // Avançar com Enter depois de responder
-      if (tecla === "ENTER" && respondida) {
+      // Enter depois de responder: avança (o Enter numa opção com foco
+      // é tratado pelo próprio botão, que escolhe essa opção)
+      if (tecla === "Enter" && respondida) {
         evento.preventDefault();
-        seguinte();
+        if (document.activeElement === elBotaoAnterior) recuar();
+        else avancar();
       }
     });
+
+    /* ==========================================================
+       GESTOS NO TELEMÓVEL
+       Deslizar o dedo para a esquerda = seguinte;
+       para a direita = anterior (só depois de responder).
+       ========================================================== */
+    let toqueInicio = null;
+    elEcraPergunta.addEventListener("touchstart", function (evento) {
+      const t = evento.changedTouches[0];
+      toqueInicio = { x: t.clientX, y: t.clientY };
+    }, { passive: true });
+
+    elEcraPergunta.addEventListener("touchend", function (evento) {
+      if (!toqueInicio) return;
+      const t = evento.changedTouches[0];
+      const dx = t.clientX - toqueInicio.x;
+      const dy = t.clientY - toqueInicio.y;
+      toqueInicio = null;
+      // Só conta como gesto se for claramente horizontal (não atrapalha o scroll)
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) {
+        if (dx < 0) avancar();
+        else recuar();
+      }
+    }, { passive: true });
 
     /* ==========================================================
        VALIDAÇÃO DOS DADOS
@@ -2195,6 +2842,7 @@
     function validarPerguntas() {
       perguntas.forEach(function (p, i) {
         const n = i + 1;
+        if (!p.tema) console.warn("Pergunta " + n + ": falta o tema.");
         if (!p.pergunta) console.warn("Pergunta " + n + ": falta o texto da pergunta.");
         if (!Array.isArray(p.opcoes) || p.opcoes.length !== 4) {
           console.warn("Pergunta " + n + ": deve ter exatamente 4 opções.");
@@ -2206,7 +2854,7 @@
           console.warn("Pergunta " + n + ": falta a explicação ou o exemplo.");
         }
       });
-      if (perguntas.length < 8) console.warn("O quiz deve ter pelo menos 8 perguntas.");
+      if (listarTemas().length < 8) console.warn("Cada jogo deve ter pelo menos 8 perguntas (8 temas).");
     }
 
     /* ==========================================================
@@ -2224,8 +2872,10 @@
         }
       }, 150);
     });
+
     elBotaoComecar.addEventListener("click", comecar);
-    elBotaoSeguinte.addEventListener("click", seguinte);
+    elBotaoSeguinte.addEventListener("click", avancar);
+    elBotaoAnterior.addEventListener("click", recuar);
     elBotaoReiniciar.addEventListener("click", comecar);
     mostrarEcraInicial();
   </script>
